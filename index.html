@@ -1,0 +1,510 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Min Hero Clone</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=MedievalSharp&family=Pirata+One&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div id="game-container">
+        
+        <!-- Intro Screen -->
+        <div id="screen-intro" class="screen active">
+            <!-- Background will be set via CSS -->
+            <div id="intro-content">
+                <!-- Top Logo -->
+                <img src="assets/mainpage/logo.png" alt="MineHero Logo" id="intro-logo">
+                
+                <!-- Center Band Background -->
+                <div id="intro-center-band"></div>
+
+                <!-- Ribbons & Main Center Content -->
+                <div id="intro-main-row">
+                    <!-- Left Ribbon Image -->
+                    <img src="assets/mainpage/mariatompeacredits.png" alt="@TompeaMaria-Daria" style="width: 250px; max-width: 20vw; object-fit: contain; padding-left: 20px;">
+                    
+                    <div id="intro-center-actions">
+                        <img src="assets/mainpage/play button.png" id="btn-play" alt="Play" style="cursor: pointer; transition: transform 0.1s; width: 600px; max-width: 100%;" onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'">
+                        
+                        <div id="save-slots" class="hidden">
+                            <button class="slot btn-stone-slot" data-slot="1">New Slot</button>
+                            <button class="slot btn-stone-slot" data-slot="2">New Slot</button>
+                            <button class="slot btn-stone-slot" data-slot="3">New Slot</button>
+                        </div>
+                    </div>
+
+                    <!-- Right Ribbon Image -->
+                    <img src="assets/mainpage/afanmadecopyofminhero.png" alt="A fanmade copy of Minehero" style="width: 250px; max-width: 20vw; object-fit: contain; padding-right: 20px;">
+                </div>
+
+                <!-- Bottom Bar -->
+                <div id="intro-bottom-bar">
+                    <div class="intro-host">HOST GAME</div>
+                    <button id="btn-intro-credits">CREDITS</button>
+                    <div class="intro-socials">
+                        <div class="social-icon fb-icon">f</div>
+                        <div class="social-icon tw-icon">t</div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Character Creation Popup -->
+            <div id="character-creation-overlay" class="hidden">
+                <div id="character-creation">
+                    <button id="btn-close-char">X</button>
+                    <div class="char-create-content">
+                        <div class="char-create-left">
+                            <div class="char-input-row">
+                                <label>NAME:</label>
+                                <input type="text" id="char-name" maxlength="12">
+                            </div>
+                            <div class="char-input-row">
+                                <label>GENDER:</label>
+                                <div id="gender-select">
+                                    <button class="gender-btn" data-gender="boy">♂</button>
+                                    <button class="gender-btn" data-gender="girl">♀</button>
+                                </div>
+                            </div>
+                            <button id="btn-start-adventure" class="hidden">OK</button>
+                        </div>
+                        <div class="char-create-right">
+                            <div id="char-preview-sprite" class="hero-avatar large">👱‍♂️</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Stone Doors Overlay for Transition -->
+            <div id="stone-doors-left" class="stone-door hidden"></div>
+            <div id="stone-doors-right" class="stone-door hidden"></div>
+        </div>
+
+        <!-- Fade to black overlay -->
+        <div id="fade-overlay" class="hidden"></div>
+
+        <!-- Top Menu -->
+        <div id="top-menu" class="hidden">
+            <button id="btn-menu">MENU</button>
+        </div>
+
+        <!-- Menu Overlay -->
+        <div id="menu-overlay" class="hidden" style="position:absolute; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); z-index:200; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:20px;">
+            <h1 style="font-family:'Pirata One', cursive; font-size:64px; color:#ffffff; text-shadow: -2px -2px 0 #900000, 2px -2px 0 #900000, -2px 2px 0 #900000, 2px 2px 0 #900000, 4px 4px 5px rgba(0,0,0,1); margin-bottom: 20px;">Menu</h1>
+            <button id="btn-menu-hero" class="menu-btn">Hero Profile</button>
+            <button id="btn-menu-team" class="menu-btn">My Team</button>
+            <button id="btn-menu-collection" class="menu-btn">Collection</button>
+            <button id="btn-menu-resume" class="menu-btn">Resume</button>
+        </div>
+
+        <!-- Team Overlay -->
+        <div id="team-overlay" class="hidden" style="position:absolute; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.7); z-index:210; display:flex; align-items:center; justify-content:center;">
+            <div id="team-overlay-box" style="background-color: #34495e; border: 4px solid #7f8c8d; border-radius: 10px; padding: 20px; width: 400px; display: flex; flex-direction: column; gap: 10px; position: relative;">
+                <button id="btn-close-team" style="position: absolute; top: -15px; right: -15px; background: #e74c3c; color: white; border: 2px solid white; border-radius: 5px; font-size: 20px; padding: 5px 10px; cursor: pointer; font-weight: bold;">X</button>
+                <div id="team-list-container" style="display: flex; flex-direction: column; gap: 5px;">
+                    <!-- Team members injected here -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Screen Area -->
+        <div id="screen-main" class="screen hidden">
+            <h1 style="margin-top: 20px;">Tower of Sages</h1>
+            <p style="margin-bottom: 20px;">Scroll up to climb the tower</p>
+            
+            <div id="tower-scroll-container">
+                <div id="tower-structure">
+                    <!-- Tower floors/rooms will be dynamically generated here -->
+                </div>
+            </div>
+            
+            <!-- Map Popup for a level -->
+            <div id="level-map-popup" class="hidden">
+                <h2>Level Map</h2>
+                <div id="dots-container">
+                    <!-- Easy mode dots will go here -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Collection Screen -->
+        <div id="screen-collection" class="screen hidden">
+            <div id="collection-layout">
+                <!-- Left Panel: Grid -->
+                <div id="collection-left">
+                    <div id="col-top-bar">
+                        <div class="pagination-tabs">
+                            <button class="page-tab active">1</button>
+                            <button class="page-tab">2</button>
+                            <button class="page-tab">3</button>
+                            <button class="page-tab">4</button>
+                            <button class="page-tab">5</button>
+                            <div style="color: white; font-size: 20px; margin-left: auto;">▶</div>
+                        </div>
+                    </div>
+                    
+                    <div id="col-current-team-container">
+                        <div class="col-section-title">-CURRENT TEAM-</div>
+                        <div id="col-current-team" class="sprite-row">
+                            <!-- current team injected here -->
+                        </div>
+                    </div>
+                    
+                    <div id="col-grid-container">
+                        <div id="col-grid" class="sprite-grid">
+                            <!-- storage grid injected here -->
+                        </div>
+                    </div>
+                    
+                    <div id="col-bottom-bar">
+                        <button id="btn-col-return">◀ RETURN</button>
+                        <div style="color: white; font-weight: bold;">SWAP <input type="checkbox" id="chk-swap"></div>
+                    </div>
+                </div>
+
+                <!-- Right Panel: Details -->
+                <div id="collection-right">
+                    <div id="detail-header">
+                        <div id="detail-sprite-container">
+                            <div id="detail-sprite" class="sprite-placeholder large">??</div>
+                        </div>
+                        <div id="detail-info">
+                            <h2 id="detail-name">Minion Name</h2>
+                            <div class="detail-bars-small">
+                                <div class="stat-bar-bg"><div id="detail-hp-fill" class="stat-bar-fill bg-red"></div></div>
+                                <div class="stat-bar-bg"><div id="detail-en-fill" class="stat-bar-fill bg-blue"></div></div>
+                            </div>
+                            <div class="detail-types-small">
+                                <span class="type-icon">♦</span> <span class="type-icon" style="color:#3498db">☯</span>
+                            </div>
+                        </div>
+                        <div id="detail-level">LV 60</div>
+                    </div>
+                    
+                    <div id="detail-xp-bar-container">
+                        <span style="color: white; font-weight: bold; font-size: 12px; margin-right: 5px;">XP</span>
+                        <div class="stat-bar-bg xp-bar"><div class="stat-bar-fill bg-green" style="width: 70%"></div></div>
+                    </div>
+                    
+                    <div id="detail-tabs">
+                        <button class="d-tab active">STATS</button>
+                        <button class="d-tab">MOVES</button>
+                        <button class="d-tab">GEMS</button>
+                    </div>
+                    
+                    <div id="detail-stats-content">
+                        <div id="detail-type-row">
+                            <span style="color: white; font-weight: bold;">MINION TYPE</span>
+                            <div id="badge-type-1" class="type-badge bg-red-dark">FIRE</div>
+                            <div id="badge-type-2" class="type-badge bg-yellow-dark">HOLY</div>
+                        </div>
+                        
+                        <div class="large-stat-row bg-red-dark">
+                            <span class="stat-label">Health:</span>
+                            <span id="val-health" class="stat-val">215</span>
+                            <div class="stat-bar-bg"><div class="stat-bar-fill bg-red" style="width: 60%"></div></div>
+                        </div>
+                        <div class="large-stat-row bg-purple-dark">
+                            <span class="stat-label">Energy:</span>
+                            <span id="val-energy" class="stat-val">218</span>
+                            <div class="stat-bar-bg"><div class="stat-bar-fill bg-purple" style="width: 70%"></div></div>
+                        </div>
+                        <div class="large-stat-row bg-orange-dark">
+                            <span class="stat-label">Attack:</span>
+                            <span id="val-attack" class="stat-val">300</span>
+                            <div class="stat-bar-bg"><div class="stat-bar-fill bg-orange" style="width: 90%"></div></div>
+                        </div>
+                        <div class="large-stat-row bg-yellow-dark">
+                            <span class="stat-label">Healing:</span>
+                            <span id="val-healing" class="stat-val">185</span>
+                            <div class="stat-bar-bg"><div class="stat-bar-fill bg-yellow" style="width: 50%"></div></div>
+                        </div>
+                        <div class="large-stat-row bg-blue-dark">
+                            <span class="stat-label">Speed:</span>
+                            <span id="val-speed" class="stat-val">225</span>
+                            <span style="color: #34495e; font-weight:bold; margin-left: 5px;">+5%</span>
+                            <div class="stat-bar-bg"><div class="stat-bar-fill bg-blue" style="width: 80%"></div></div>
+                        </div>
+                    </div>
+                    
+                    <div id="detail-footer">
+                        <button id="btn-release">RELEASE</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Egg Hatching Screen -->
+        <div id="screen-egg" class="screen hidden">
+            <h1>Choose an Egg!</h1>
+            <div id="egg-container">
+                <div class="egg" data-egg="1">🥚</div>
+                <div class="egg" data-egg="2">🥚</div>
+                <div class="egg" data-egg="3">🥚</div>
+            </div>
+        </div>
+
+        <!-- Combat Screen -->
+        <div id="screen-combat" class="screen hidden">
+            <button id="btn-run-corner">Run Away 🏃</button>
+            <div id="combat-area">
+                <!-- Vignette Overlay -->
+                <div id="combat-vignette" class="hidden"></div>
+                <div id="combat-turn-overlay"></div>
+                
+                <!-- Enemies (Right Side) -->
+                <div id="enemy-side" class="side-container">
+                    <div id="e-slot-0" class="combat-slot enemy-slot" style="right: 15%; top: 65%;"></div>
+                    <div id="e-slot-1" class="combat-slot enemy-slot" style="right: 25%; top: 55%;"></div>
+                    <div id="e-slot-2" class="combat-slot enemy-slot" style="right: 25%; top: 75%;"></div>
+                    <div id="e-slot-3" class="combat-slot enemy-slot" style="right: 35%; top: 45%;"></div>
+                    <div id="e-slot-4" class="combat-slot enemy-slot" style="right: 35%; top: 85%;"></div>
+                </div>
+                
+                <!-- Player Minions (Left Side) -->
+                <div id="player-side" class="side-container">
+                    <div id="p-slot-0" class="combat-slot player-slot" style="left: 15%; top: 65%;"></div>
+                    <div id="p-slot-1" class="combat-slot player-slot" style="left: 25%; top: 55%;"></div>
+                    <div id="p-slot-2" class="combat-slot player-slot" style="left: 25%; top: 75%;"></div>
+                    <div id="p-slot-3" class="combat-slot player-slot" style="left: 35%; top: 45%;"></div>
+                    <div id="p-slot-4" class="combat-slot player-slot" style="left: 35%; top: 85%;"></div>
+                </div>
+            </div>
+            
+            <div id="combat-ui">
+                <div id="combat-log"></div>
+            </div>
+        </div>
+
+        <!-- Hero Profile Screen -->
+        <div id="screen-hero" class="screen hidden" style="background-color: #2c3e50;">
+            <div id="hero-layout">
+                <div class="hero-top-row">
+                    <!-- Top Left: Hero Info -->
+                    <div class="hero-info-box">
+                        <div class="hero-avatar">👱‍♂️</div>
+                        <div class="hero-stats">
+                            <div class="hero-stat-row"><span>Name</span><span id="hero-name-display">Apple</span></div>
+                            <div class="hero-stat-row"><span>Money</span><span id="hero-money-display">$0</span></div>
+                            <div class="hero-stat-row"><span>Minion-Pedia</span><span id="hero-pedia-display">0</span></div>
+                        </div>
+                    </div>
+                    
+                    <!-- Top Right: Seals -->
+                    <div class="hero-seals-box">
+                        <h3>Your Seals</h3>
+                        <div class="sword-seal-container">
+                            <div class="seal-slot bg-green-dark">🍃</div>
+                            <div class="seal-slot bg-red-dark">🔥</div>
+                            <div class="seal-slot bg-yellow-dark">⚡</div>
+                            <div class="seal-slot bg-purple-dark">💀</div>
+                            <div class="seal-slot bg-blue-dark">💧</div>
+                            <div class="seal-slot bg-red-dark">🩸</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Bottom: Skills -->
+                <div class="hero-skills-box">
+                    <div class="skills-grid">
+                        <!-- Skill buttons injected via JS -->
+                    </div>
+                    
+                    <div class="hero-star-container">
+                        <div class="star-display">
+                            <span id="hero-star-count">0</span>
+                            <span class="giant-star">⭐</span>
+                        </div>
+                        <button id="btn-hero-reset">RESET ⭐</button>
+                    </div>
+                </div>
+                
+                <button id="btn-hero-return">◀ RETURN</button>
+            </div>
+        </div>
+        
+        <!-- Minion Detail Overlay (Context Menu & Deep Stats) -->
+        <div id="minion-detail-modal" class="hidden" style="position:absolute; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); z-index:250; display:flex; align-items:center; justify-content:center;">
+            
+            <div style="display:flex; gap:20px; align-items:flex-start;">
+                
+                <!-- Left Panel (Stats/Moves) -->
+                <div id="md-left-panel" style="background-color:#4a506d; border:3px solid #8e94a8; border-radius:10px; width:450px; padding:15px; position:relative; box-shadow:0 0 20px rgba(0,0,0,0.8); display:none;">
+                    <button id="md-btn-close-x" style="position:absolute; top:-10px; right:-10px; background:#4a506d; color:white; border:2px solid white; border-radius:5px; font-weight:bold; font-size:20px; width:35px; height:35px; cursor:pointer; font-family:'MedievalSharp', cursive;">X</button>
+                    
+                    <!-- Header -->
+                    <div style="display:flex; background-color:#2b2b2b; border:2px solid #1a1a1a; border-radius:8px; padding:10px; align-items:center; gap:15px;">
+                        <div id="md-sprite" style="width:80px; height:80px; background:#ddd; border-radius:5px; border:2px solid #555; display:flex; justify-content:center; align-items:center; font-size:40px;"></div>
+                        <div style="flex:1;">
+                            <div style="display:flex; justify-content:space-between; align-items:center;">
+                                <div id="md-name" style="font-family:'MedievalSharp', cursive; font-size:28px; color:white; text-shadow:1px 1px 2px black;">Name</div>
+                                <button style="background:#f1c40f; color:black; font-family:'MedievalSharp', cursive; border:2px solid white; border-radius:4px; padding:2px 8px; font-weight:bold; font-size:12px; cursor:pointer;">RENAME</button>
+                            </div>
+                            
+                            <div style="margin-top:5px; background:#111; padding:2px; border-radius:4px; height:20px; border:1px solid #000;">
+                                <div id="md-hp-fill" style="background:#e74c3c; height:100%; width:100%;"></div>
+                            </div>
+                            <div style="margin-top:2px; background:#111; padding:2px; border-radius:4px; height:14px; border:1px solid #000;">
+                                <div id="md-en-fill" style="background:#3498db; height:100%; width:100%;"></div>
+                            </div>
+                        </div>
+                        <div style="color:white; font-family:'MedievalSharp', cursive; font-size:32px; align-self:flex-end;">
+                            <span style="font-size:16px;">Lv</span><span id="md-level">5</span>
+                        </div>
+                    </div>
+                    
+                    <!-- XP Bar -->
+                    <div style="margin-top:10px; display:flex; align-items:center; gap:10px;">
+                        <div style="font-weight:bold; color:white;">XP</div>
+                        <div style="flex:1; background:#111; height:15px; border-radius:4px; border:1px solid #555;">
+                            <div style="background:#8bc34a; width:70%; height:100%; border-radius:3px;"></div>
+                        </div>
+                    </div>
+                    
+                    <!-- Tabs -->
+                    <div style="display:flex; margin-top:15px; background:#222; border-radius:8px 8px 0 0; overflow:hidden; border:2px solid #111; border-bottom:none;">
+                        <button id="md-tab-stats" class="md-tab active" style="flex:1; padding:10px; background:#444; color:white; font-family:'MedievalSharp', cursive; font-size:20px; border:none; cursor:pointer; font-weight:bold;">STATS</button>
+                        <button id="md-tab-moves" class="md-tab" style="flex:1; padding:10px; background:#222; color:#888; font-family:'MedievalSharp', cursive; font-size:20px; border:none; cursor:pointer; font-weight:bold; border-left:2px solid #111; border-right:2px solid #111;">MOVES</button>
+                        <button id="md-tab-gems" class="md-tab" style="flex:1; padding:10px; background:#222; color:#888; font-family:'MedievalSharp', cursive; font-size:20px; border:none; cursor:pointer; font-weight:bold;">GEMS</button>
+                    </div>
+                    
+                    <!-- Tab Content Container -->
+                    <div id="md-tab-content" style="background:#2b2b2b; border:2px solid #111; border-radius:0 0 8px 8px; padding:15px; min-height:250px;">
+                        
+                        <!-- STATS CONTENT -->
+                        <div id="md-content-stats">
+                            <div style="display:flex; align-items:center; gap:10px; margin-bottom:15px;">
+                                <div style="color:white; font-weight:bold; font-size:18px; font-family:'MedievalSharp', cursive;">MINION TYPE</div>
+                                <div style="background:#e0cca8; color:#7a6242; padding:2px 10px; border-radius:10px; font-weight:bold; font-size:14px; border:2px solid #d4be94;">NORMAL</div>
+                            </div>
+                            
+                            <div style="display:flex; flex-direction:column; gap:0;">
+                                <div class="md-stat-bar" style="background:#e74c3c; padding:8px 15px; display:flex; align-items:center; border:1px solid #c0392b;">
+                                    <span style="color:white; font-weight:bold; width:100px; text-shadow:1px 1px 1px black;">Health : <span id="md-val-hp">15</span></span>
+                                    <div style="width:15px; height:20px; background:#c0392b; border:2px solid #6c2018; border-radius:3px;"></div>
+                                </div>
+                                <div class="md-stat-bar" style="background:#9b59b6; padding:8px 15px; display:flex; align-items:center; border:1px solid #8e44ad;">
+                                    <span style="color:white; font-weight:bold; width:100px; text-shadow:1px 1px 1px black;">Energy : <span id="md-val-en">24</span></span>
+                                    <div style="width:15px; height:20px; background:#8e44ad; border:2px solid #4a235a; border-radius:3px;"></div>
+                                </div>
+                                <div class="md-stat-bar" style="background:#f39c12; padding:8px 15px; display:flex; align-items:center; border:1px solid #e67e22;">
+                                    <span style="color:white; font-weight:bold; width:100px; text-shadow:1px 1px 1px black;">Attack : <span id="md-val-atk">15</span></span>
+                                    <div style="width:15px; height:20px; background:#e67e22; border:2px solid #a04000; border-radius:3px;"></div>
+                                </div>
+                                <div class="md-stat-bar" style="background:#f1c40f; padding:8px 15px; display:flex; align-items:center; border:1px solid #f39c12;">
+                                    <span style="color:black; font-weight:bold; width:100px;">Healing : <span id="md-val-heal">13</span></span>
+                                    <div style="width:15px; height:20px; background:#f39c12; border:2px solid #7d6608; border-radius:3px;"></div>
+                                </div>
+                                <div class="md-stat-bar" style="background:#3498db; padding:8px 15px; display:flex; align-items:center; justify-content:space-between; border:1px solid #2980b9;">
+                                    <div style="display:flex; align-items:center;">
+                                        <span style="color:white; font-weight:bold; width:100px; text-shadow:1px 1px 1px black;">Speed : <span id="md-val-spd">18</span></span>
+                                        <div style="width:15px; height:20px; background:#2980b9; border:2px solid #154360; border-radius:3px;"></div>
+                                    </div>
+                                    <span style="color:white; font-weight:bold; text-shadow:1px 1px 1px black;">+5%</span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- MOVES CONTENT -->
+                        <div id="md-content-moves" class="hidden">
+                            <div style="display:flex; flex-direction:column; gap:20px; margin-top:10px;">
+                                <div style="display:flex; align-items:center; justify-content:space-between;">
+                                    <div style="display:flex; align-items:center; gap:15px;">
+                                        <div style="width:50px; height:50px; background:#e0cca8; border:2px solid #d4be94; border-radius:5px; display:flex; justify-content:center; align-items:center; font-size:30px;">🐾</div>
+                                        <span style="color:white; font-weight:bold; font-size:20px;">Claw</span>
+                                    </div>
+                                    <button style="background:linear-gradient(to bottom, #8a8d9f, #636676); color:white; border:2px solid #4a506d; border-radius:5px; font-weight:bold; padding:5px 15px; font-family:'MedievalSharp', cursive; cursor:pointer;">DETAILS</button>
+                                </div>
+                                <div style="display:flex; align-items:center; justify-content:space-between;">
+                                    <div style="display:flex; align-items:center; gap:15px;">
+                                        <div style="width:50px; height:50px; background:#e0cca8; border:2px solid #d4be94; border-radius:5px; display:flex; justify-content:center; align-items:center; font-size:30px;">🦁</div>
+                                        <span style="color:white; font-weight:bold; font-size:20px;">Roar</span>
+                                    </div>
+                                    <button style="background:linear-gradient(to bottom, #8a8d9f, #636676); color:white; border:2px solid #4a506d; border-radius:5px; font-weight:bold; padding:5px 15px; font-family:'MedievalSharp', cursive; cursor:pointer;">DETAILS</button>
+                                </div>
+                            </div>
+                        </div>
+                        
+                    </div>
+                    
+                    <!-- Bottom Return Button -->
+                    <button id="md-btn-return" style="margin-top:15px; background:white; color:black; font-family:'MedievalSharp', cursive; font-size:24px; font-weight:bold; padding:5px 15px; border-radius:5px; border:2px solid #111; cursor:pointer;">◀ RETURN</button>
+                </div>
+                
+                <!-- Right Panel (Context Menu Buttons) -->
+                <div id="md-right-panel" style="background-color:#4a506d; border:3px solid #8e94a8; border-radius:10px; width:200px; padding:15px; display:flex; flex-direction:column; gap:10px; box-shadow:0 0 20px rgba(0,0,0,0.8);">
+                    <button id="md-btn-details" style="background:linear-gradient(to bottom, #8a8d9f, #636676); color:white; font-family:'MedievalSharp', cursive; font-size:20px; font-weight:bold; padding:15px; border:3px solid #4a506d; border-radius:5px; cursor:pointer; text-shadow:1px 1px 2px black;">DETAILS</button>
+                    <button id="md-btn-skilltree" style="background:linear-gradient(to bottom, #8a8d9f, #636676); color:white; font-family:'MedievalSharp', cursive; font-size:20px; font-weight:bold; padding:15px; border:3px solid #4a506d; border-radius:5px; cursor:pointer; text-shadow:1px 1px 2px black;">SKILL TREE</button>
+                    <button id="md-btn-cancel" style="background:linear-gradient(to bottom, #e74c3c, #c0392b); color:white; font-family:'MedievalSharp', cursive; font-size:20px; font-weight:bold; padding:15px; border:3px solid #6c2018; border-radius:5px; cursor:pointer; text-shadow:1px 1px 2px black; margin-top:10px;">CANCEL</button>
+                </div>
+                
+            </div>
+        </div>
+
+        <!-- Specialization / Skill Tree Modal -->
+        <div id="specialization-modal" class="hidden" style="position:absolute; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); z-index:300; display:flex; align-items:center; justify-content:center;">
+            <div style="background-color:#4a506d; border:3px solid #8e94a8; border-radius:10px; width:500px; padding:15px; position:relative; box-shadow:0 0 20px rgba(0,0,0,0.8);">
+                <button id="spec-btn-close-x" style="position:absolute; top:-10px; right:-10px; background:#4a506d; color:white; border:2px solid white; border-radius:5px; font-weight:bold; font-size:20px; width:35px; height:35px; cursor:pointer; font-family:'MedievalSharp', cursive;">X</button>
+                
+                <h2 style="text-align:center; color:#f1c40f; font-family:'MedievalSharp', cursive; font-size:28px; margin-bottom:15px;">Choose a specialization</h2>
+                
+                <div style="background:#2b2b2b; border:2px solid #111; border-radius:8px; padding:20px; display:flex; flex-direction:column; align-items:center;">
+                    
+                    <!-- Tabs -->
+                    <div style="display:flex; width:100%; justify-content:center; gap:2px; margin-bottom:20px;">
+                        <div style="background:#333; color:#f1c40f; padding:10px 30px; font-weight:bold; font-size:22px; border-radius:5px 0 10px 0; border:2px solid #111; text-align:center;">Speed</div>
+                        <div style="background:#333; color:#f1c40f; padding:10px 30px; font-weight:bold; font-size:22px; border-radius:0 0 10px 10px; border:2px solid #111; text-align:center;">Guard</div>
+                        <div style="background:#333; color:#f1c40f; padding:10px 30px; font-weight:bold; font-size:22px; border-radius:0 5px 0 10px; border:2px solid #111; text-align:center;">Normal</div>
+                    </div>
+                    
+                    <!-- Nodes -->
+                    <div style="display:flex; justify-content:center; gap:40px; margin-bottom:40px;">
+                        
+                        <!-- Speed Node -->
+                        <div style="display:flex; flex-direction:column; align-items:center;">
+                            <div style="width:70px; height:70px; background:#fff2cc; border:3px solid #f1c40f; border-radius:5px; display:flex; justify-content:center; align-items:center; font-size:40px; position:relative; cursor:pointer;">
+                                ⚡
+                                <div style="position:absolute; bottom:-10px; right:-10px; background:black; color:white; font-size:12px; padding:2px 5px; border-radius:10px; font-weight:bold; border:2px solid #333;">0/1</div>
+                            </div>
+                        </div>
+                        
+                        <!-- Guard Node -->
+                        <div style="display:flex; flex-direction:column; align-items:center;">
+                            <div style="width:70px; height:70px; background:#e6cdab; border:3px solid #d35400; border-radius:5px; display:flex; justify-content:center; align-items:center; font-size:40px; position:relative; cursor:pointer;">
+                                🛡️
+                                <div style="position:absolute; bottom:-10px; right:-10px; background:black; color:white; font-size:12px; padding:2px 5px; border-radius:10px; font-weight:bold; border:2px solid #333;">0/1</div>
+                            </div>
+                        </div>
+                        
+                        <!-- Normal Node -->
+                        <div style="display:flex; flex-direction:column; align-items:center;">
+                            <div style="width:70px; height:70px; background:#e8f8f5; border:3px solid #2ecc71; border-radius:5px; display:flex; justify-content:center; align-items:center; font-size:40px; position:relative; cursor:pointer;">
+                                🌿
+                                <div style="position:absolute; bottom:-10px; right:-10px; background:black; color:white; font-size:12px; padding:2px 5px; border-radius:10px; font-weight:bold; border:2px solid #333;">0/1</div>
+                            </div>
+                        </div>
+                        
+                    </div>
+                    
+                    <div style="color:#f1c40f; font-family:'MedievalSharp', cursive; font-size:28px; text-shadow:2px 2px 4px black;">
+                        Points: <span id="spec-points">1</span>
+                    </div>
+                    
+                </div>
+                
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-top:15px;">
+                    <button id="spec-btn-return" style="background:white; color:black; font-family:'MedievalSharp', cursive; font-size:24px; font-weight:bold; padding:5px 15px; border-radius:5px; border:2px solid #111; cursor:pointer;">◀ RETURN</button>
+                    <button id="spec-btn-reset" style="background:linear-gradient(to bottom, #8a8d9f, #636676); color:white; font-family:'MedievalSharp', cursive; font-size:20px; font-weight:bold; padding:5px 15px; border:2px solid #4a506d; border-radius:5px; cursor:pointer; text-shadow:1px 1px 2px black;">RESET</button>
+                </div>
+                
+            </div>
+        </div>
+
+    </div>
+    
+    <script src="app.js"></script>
+</body>
+</html>
