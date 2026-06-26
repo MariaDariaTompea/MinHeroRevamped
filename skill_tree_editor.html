@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>MinHero Revamped - Interactive Skill Tree Editor</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&family=MedievalSharp&display=swap" rel="stylesheet">
+    <script src="data.js"></script>
     <style>
         :root {
             --bg-dark: #12141c;
@@ -1113,7 +1114,7 @@
                        .replace(/[\s-_]+/g, "_");
         }
 
-        const SKILL_DB = {
+        const LOCAL_SKILL_DB = {
             'Haste': {
                 icon: '⚡',
                 ranks: {
@@ -1180,6 +1181,8 @@
             }
         };
 
+        const activeSkillDb = typeof SKILL_DB !== 'undefined' ? SKILL_DB : LOCAL_SKILL_DB;
+
         function getSkillProperties(name, rank) {
             const defaultProps = {
                 name: name,
@@ -1190,7 +1193,7 @@
             
             if (!name) return defaultProps;
             
-            const skillData = SKILL_DB[name];
+            const skillData = activeSkillDb[name];
             if (!skillData) {
                 return defaultProps;
             }

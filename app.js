@@ -782,8 +782,10 @@ async function handleCombatWin(earnedStars) {
             p.currentHealth = p.health;
             p.currentEnergy = p.energy;
             
+            const displayName = `${p.name} (Slot ${p.index + 1})`;
             levelUpQueue.push({
                 name: p.name,
+                displayName: displayName,
                 level: newLevel,
                 oldStats,
                 newStats,
@@ -862,7 +864,7 @@ function processLevelUpQueue(onComplete) {
     const lu = levelUpQueue.shift();
     const popup = document.getElementById('level-up-popup');
     
-    document.getElementById('lu-name').textContent = lu.name;
+    document.getElementById('lu-name').textContent = lu.displayName || lu.name;
     document.getElementById('lu-level').textContent = `lv.${lu.level}`;
     
     document.getElementById('lu-old-health').textContent = lu.oldStats.health;
@@ -887,15 +889,31 @@ function processLevelUpQueue(onComplete) {
         starGraphic.classList.add('hidden');
     }
     
+    // Apply visual pop-in transition
+    popup.style.opacity = '0';
+    popup.style.transform = 'translate(-50%, -50%) scale(0.8)';
+    popup.style.transition = 'opacity 0.25s ease-out, transform 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275)';
     popup.classList.remove('hidden');
+    
+    // Trigger reflow
+    void popup.offsetHeight;
+    popup.style.opacity = '1';
+    popup.style.transform = 'translate(-50%, -50%) scale(1)';
     
     const nextBtn = document.getElementById('btn-next-level-up');
     const newNextBtn = nextBtn.cloneNode(true);
     nextBtn.parentNode.replaceChild(newNextBtn, nextBtn);
     
     newNextBtn.addEventListener('click', () => {
-        popup.classList.add('hidden');
-        processLevelUpQueue(onComplete);
+        // Fade out transition
+        popup.style.opacity = '0';
+        popup.style.transform = 'translate(-50%, -50%) scale(0.8)';
+        popup.style.transition = 'opacity 0.2s ease-in, transform 0.2s ease-in';
+        
+        setTimeout(() => {
+            popup.classList.add('hidden');
+            processLevelUpQueue(onComplete);
+        }, 200);
     });
 }
 
