@@ -591,7 +591,7 @@ function spawnAbilityNodes(player, slotElem) {
             label.textContent = ab.name;
         }
         
-        const imgPath = `assets/abilities/${ab.name}/image.png`;
+        const imgPath = `assets/abilities/${encodeURIComponent(ab.name)}/image.png`;
         node.innerHTML = `
             <img src="${imgPath}" onerror="this.style.display='none'; this.nextElementSibling.style.display='block';" style="width: 100%; height: 100%; object-fit: cover; border-radius: 5px;" />
             <span style="display: none;">${ab.name[0]}</span>
@@ -918,7 +918,7 @@ function processLevelUpQueue(onComplete) {
     });
 }
 
-function finishCombatWin(progressed, nextFloor, nextRoom) {
+function finishCombatWin(progressed, nextFloor, nextRoom, xpGained) {
     fadeOverlay.classList.remove('hidden');
     void fadeOverlay.offsetWidth;
     fadeOverlay.classList.add('blackout');
