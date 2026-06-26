@@ -583,10 +583,15 @@ function spawnAbilityNodes(player, slotElem) {
         node.dataset.tooltip = `${ab.name}\nMana: ${ab.cost}\n${ab.desc}`;
         
         const cdRemaining = (player.cooldowns && player.cooldowns[ab.name]) || 0;
+        const hasEnergy = player.energy >= ab.cost;
         if (cdRemaining > 0) {
             node.style.opacity = '0.4';
             node.style.filter = 'grayscale(1)';
             label.textContent = `${ab.name} (CD: ${cdRemaining})`;
+        } else if (!hasEnergy) {
+            node.style.opacity = '0.5';
+            node.style.filter = 'grayscale(0.5)';
+            label.textContent = `${ab.name} (No Energy)`;
         } else {
             label.textContent = ab.name;
         }
@@ -604,7 +609,7 @@ function spawnAbilityNodes(player, slotElem) {
             node.style.transform = 'scale(1)';
         }, 50 * i);
         
-        if (cdRemaining === 0) {
+        if (cdRemaining === 0 && hasEnergy) {
             node.addEventListener('click', (e) => {
                 e.stopPropagation();
                 if(combatState.state !== 'WAITING') return;
@@ -647,6 +652,12 @@ async function executePlayerAbility(player, ability, target = null) {
     
     const success = abInstance.execute(player, target);
     if (!success) {
+        // Show visible feedback why the ability failed
+        if (player.energy < (ability.cost || 0)) {
+            spawnStatusPopup(player, 'Not enough energy!', false, '#ff6666');
+        } else {
+            spawnStatusPopup(player, 'Ability failed!', false, '#ff6666');
+        }
         combatState.state = 'WAITING';
         renderCombatUI();
         const slot = document.getElementById(`p-slot-${player.index}`);
