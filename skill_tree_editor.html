@@ -737,12 +737,9 @@
             }
             
             const newNode = {
-                id: "skill_" + Date.now().toString().slice(-4),
+                id: "new_skill",
                 name: "New Skill",
-                max: 3,
-                desc: "Skill description here.",
-                icon: "🔮",
-                statsBonus: { none: 0 }
+                max: 3
             };
             
             col.push(newNode);
@@ -776,25 +773,9 @@
             
             if (field === 'max') {
                 node.max = parseInt(value, 10) || 1;
-            } else if (field === 'statsType') {
-                // Clear old stats bonus keys
-                node.statsBonus = {};
-                if(value !== 'none') {
-                    node.statsBonus[value] = parseInt(document.getElementById(`node-bonus-${colIndex}-${nodeIndex}`).value, 10) || 1;
-                }
-            } else if (field === 'statsVal') {
-                const type = document.getElementById(`node-stat-${colIndex}-${nodeIndex}`).value;
-                if(type !== 'none') {
-                    node.statsBonus = {};
-                    node.statsBonus[type] = parseInt(value, 10) || 1;
-                }
-            } else {
-                node[field] = value;
-                if(field === 'name') {
-                    // Update ID auto
-                    node.id = value.toLowerCase().replace(/[^a-z0-9]/g, '_');
-                    document.getElementById(`node-id-${colIndex}-${nodeIndex}`).value = node.id;
-                }
+            } else if (field === 'name') {
+                node.name = value;
+                node.id = generateSkillId(value);
             }
             updateConfig();
         }
@@ -809,16 +790,6 @@
                 
                 const colNodes = specTrees[c];
                 colNodes.forEach((node, idx) => {
-                    let activeStatType = 'none';
-                    let activeStatVal = 1;
-                    if(node.statsBonus) {
-                        const keys = Object.keys(node.statsBonus);
-                        if(keys.length > 0 && keys[0] !== 'none') {
-                            activeStatType = keys[0];
-                            activeStatVal = node.statsBonus[activeStatType];
-                        }
-                    }
-
                     const card = document.createElement('div');
                     card.className = 'node-card';
                     card.innerHTML = `
@@ -830,45 +801,15 @@
                                 <button class="btn-mini danger" onclick="deleteNode(${c}, ${idx})">✕</button>
                             </div>
                         </div>
-                        <div style="display: grid; grid-template-columns: 1.5fr 1fr; gap: 5px;">
+                        <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 10px;">
                             <div>
                                 <label>Skill Name</label>
                                 <input type="text" value="${node.name}" oninput="updateNodeField(${c}, ${idx}, 'name', this.value)">
                             </div>
                             <div>
-                                <label>Icon (Emoji/File)</label>
-                                <input type="text" value="${node.icon}" style="text-align: center;" oninput="updateNodeField(${c}, ${idx}, 'icon', this.value)">
-                            </div>
-                        </div>
-                        <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 5px;">
-                            <div>
-                                <label>Unique ID</label>
-                                <input type="text" id="node-id-${c}-${idx}" value="${node.id}" oninput="updateNodeField(${c}, ${idx}, 'id', this.value)">
-                            </div>
-                            <div>
                                 <label>Max Rank</label>
                                 <input type="number" value="${node.max}" min="1" max="10" oninput="updateNodeField(${c}, ${idx}, 'max', this.value)">
                             </div>
-                        </div>
-                        <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 5px;">
-                            <div>
-                                <label>Stat Boost</label>
-                                <select id="node-stat-${c}-${idx}" onchange="updateNodeField(${c}, ${idx}, 'statsType', this.value)">
-                                    <option value="none" ${activeStatType === 'none' ? 'selected' : ''}>None</option>
-                                    <option value="health" ${activeStatType === 'health' ? 'selected' : ''}>Max Health</option>
-                                    <option value="attack" ${activeStatType === 'attack' ? 'selected' : ''}>Attack</option>
-                                    <option value="speed" ${activeStatType === 'speed' ? 'selected' : ''}>Speed</option>
-                                    <option value="healing" ${activeStatType === 'healing' ? 'selected' : ''}>Healing</option>
-                                </select>
-                            </div>
-                            <div>
-                                <label>Value</label>
-                                <input type="number" id="node-bonus-${c}-${idx}" value="${activeStatVal}" min="1" max="50" oninput="updateNodeField(${c}, ${idx}, 'statsVal', this.value)" ${activeStatType === 'none' ? 'disabled' : ''}>
-                            </div>
-                        </div>
-                        <div>
-                            <label>Description</label>
-                            <textarea rows="2" style="font-size: 12px;" oninput="updateNodeField(${c}, ${idx}, 'desc', this.value)">${node.desc}</textarea>
                         </div>
                     `;
                     container.appendChild(card);
@@ -940,16 +881,18 @@
                 const cardsRow = frame.querySelector('.spec-cards-row');
                 config.specializations.forEach(spec => {
                     const specTree = config.trees[spec];
-                    const starter = (specTree && specTree[0] && specTree[0][0]) || { icon: '❓', name: 'Unknown' };
+                    const starter = (specTree && specTree[0] && specTree[0][0]) || { name: 'Unknown' };
+                    const starterProps = starter.name ? getSkillProperties(starter.name, 1) : { icon: '🔮' };
+                    const iconToUse = starterProps.icon || '🔮';
                     
                     const card = document.createElement('div');
                     card.className = 'spec-card';
                     card.innerHTML = `
                         <div style="color: yellow; font-size: 14px; font-weight: bold;">${spec}</div>
                         <div class="spec-card-icon" style="position: relative; overflow: hidden; width: 55px; height: 55px; border: 2px solid #444; border-radius: 8px; display: flex; align-items: center; justify-content: center; background: rgba(255,255,255,0.05);">
-                            <img src="${getSkillIconPath(starter.icon)}" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';" style="width: 100%; height: 100%; object-fit: cover; border-radius: 5px; z-index: 2;" />
+                            <img src="${getSkillIconPath(iconToUse)}" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';" style="width: 100%; height: 100%; object-fit: cover; border-radius: 5px; z-index: 2;" />
                             <div style="display: none; justify-content: center; align-items: center; width: 100%; height: 100%; z-index: 2; font-size: 32px; color: white;">
-                                ${isEmoji(starter.icon) ? starter.icon : (starter.name[0] || '🔮')}
+                                ${isEmoji(iconToUse) ? iconToUse : (starter.name[0] || '🔮')}
                             </div>
                         </div>
                         <div style="font-size: 10px; color: #aaa; text-align: center;">Starter:<br>${starter.name}</div>
@@ -1001,18 +944,30 @@
                         const parentLocked = rIdx > 0 && (previewAllocations[col[rIdx - 1].id] || 0) === 0;
                         const isLocked = anotherSpecChosen || specNotChosenYet || parentLocked;
 
+                        const currentProps = getSkillProperties(node.name, rank || 1);
+                        const nextRank = Math.min(node.max, rank + 1);
+                        const nextProps = getSkillProperties(node.name, nextRank);
+                        const iconToUse = currentProps.icon || '🔮';
+
                         const nodeDiv = document.createElement('div');
                         nodeDiv.className = `preview-node ${isLocked ? 'locked' : ''} ${rank >= node.max ? 'maxed' : ''}`;
                         nodeDiv.innerHTML = `
-                            <img src="${getSkillIconPath(node.icon)}" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';" style="width: 100%; height: 100%; object-fit: cover; border-radius: 5px; z-index: 2;" />
+                            <img src="${getSkillIconPath(iconToUse)}" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';" style="width: 100%; height: 100%; object-fit: cover; border-radius: 5px; z-index: 2;" />
                             <div style="display: none; justify-content: center; align-items: center; width: 100%; height: 100%; z-index: 2; font-size: 24px; color: white;">
-                                ${isEmoji(node.icon) ? node.icon : (node.name[0] || '🔮')}
+                                ${isEmoji(iconToUse) ? iconToUse : (node.name[0] || '🔮')}
                             </div>
                             <span class="preview-badge" style="z-index: 3;">${rank}/${node.max}</span>
                         `;
                         
-                        // Tooltip
-                        nodeDiv.setAttribute('data-tooltip', `${node.name}\nRank: ${rank}/${node.max}\n\n${node.desc}`);
+                        // Dynamic Tooltip
+                        let tooltip = `${node.name} (Rank ${rank}/${node.max})\n`;
+                        if (rank > 0) {
+                            tooltip += `Current: ${currentProps.desc}\n`;
+                        }
+                        if (rank < node.max) {
+                            tooltip += `Next: ${nextProps.desc}`;
+                        }
+                        nodeDiv.setAttribute('data-tooltip', tooltip.trim());
                         
                         if(!isLocked && previewPoints > 0 && rank < node.max && previewSpecialization === previewActiveTab) {
                             nodeDiv.onclick = () => previewAllocateNode(node.id, previewActiveTab, cIdx, rIdx);
@@ -1052,22 +1007,11 @@
                 // Clean columns of editor helper properties
                 const cleanedCols = cols.map(col => {
                     return col.map(node => {
-                        const copy = {
-                            id: node.id,
+                        return {
+                            id: node.id || generateSkillId(node.name),
                             name: node.name,
-                            max: node.max,
-                            desc: node.desc,
-                            icon: node.icon
+                            max: node.max
                         };
-                        // Only add statsBonus if it has valid values
-                        if(node.statsBonus) {
-                            const keys = Object.keys(node.statsBonus);
-                            if(keys.length > 0 && keys[0] !== 'none' && keys[0] !== '') {
-                                copy.statsBonus = {};
-                                copy.statsBonus[keys[0]] = node.statsBonus[keys[0]];
-                            }
-                        }
-                        return copy;
                     });
                 });
                 activeTrees[spec] = cleanedCols;
@@ -1159,6 +1103,107 @@
                 alert("Error importing JSON: " + e.message);
                 console.error(e);
             }
+        }
+
+        function generateSkillId(name) {
+            if (!name) return "";
+            return name.toLowerCase()
+                       .replace(/[^a-z0-9\s-_]/g, "")
+                       .trim()
+                       .replace(/[\s-_]+/g, "_");
+        }
+
+        const SKILL_DB = {
+            'Haste': {
+                icon: '⚡',
+                ranks: {
+                    1: { desc: 'Increases Speed stat by +3.', statsBonus: { speed: 3 } },
+                    2: { desc: 'Increases Speed stat by +6.', statsBonus: { speed: 6 } },
+                    3: { desc: 'Increases Speed stat by +9.', statsBonus: { speed: 9 } }
+                }
+            },
+            'Swift Strike': {
+                icon: '🦷',
+                ranks: {
+                    1: { desc: 'Increases Critical Hit chance by 10%.' },
+                    2: { desc: 'Increases Critical Hit chance by 20%.' }
+                }
+            },
+            'Quick Claw': {
+                icon: '🐾',
+                ranks: {
+                    1: { desc: 'Claw deals +2 damage.' }
+                }
+            },
+            'Iron Defense': {
+                icon: '🛡️',
+                ranks: {
+                    1: { desc: 'Increases Max Health by +5.', statsBonus: { health: 5 } },
+                    2: { desc: 'Increases Max Health by +10.', statsBonus: { health: 10 } },
+                    3: { desc: 'Increases Max Health by +15.', statsBonus: { health: 15 } }
+                }
+            },
+            'Sturdy': {
+                icon: '🧱',
+                ranks: {
+                    1: { desc: 'Reduces incoming damage by 1.' },
+                    2: { desc: 'Reduces incoming damage by 2.' }
+                }
+            },
+            'Shield Roar': {
+                icon: '🦁',
+                ranks: {
+                    1: { desc: 'Roar reduces enemy attack by 15% instead of 10%.' }
+                }
+            },
+            'Power Up': {
+                icon: '⚔️',
+                ranks: {
+                    1: { desc: 'Increases Attack stat by +1.', statsBonus: { attack: 1 } },
+                    2: { desc: 'Increases Attack stat by +2.', statsBonus: { attack: 2 } },
+                    3: { desc: 'Increases Attack stat by +3.', statsBonus: { attack: 3 } }
+                }
+            },
+            'Heal Boost': {
+                icon: '🩹',
+                ranks: {
+                    1: { desc: 'Increases Healing stat by +1.', statsBonus: { healing: 1 } },
+                    2: { desc: 'Increases Healing stat by +2.', statsBonus: { healing: 2 } },
+                    3: { desc: 'Increases Healing stat by +3.', statsBonus: { healing: 3 } }
+                }
+            },
+            'Fierce Bite': {
+                icon: '🐯',
+                ranks: {
+                    1: { desc: 'TigerBite heals 40% of damage dealt instead of 30%.' }
+                }
+            }
+        };
+
+        function getSkillProperties(name, rank) {
+            const defaultProps = {
+                name: name,
+                icon: '🔮',
+                desc: `No description for ${name} Rank ${rank}`,
+                statsBonus: {}
+            };
+            
+            if (!name) return defaultProps;
+            
+            const skillData = SKILL_DB[name];
+            if (!skillData) {
+                return defaultProps;
+            }
+            
+            const rankData = skillData.ranks ? skillData.ranks[rank] : null;
+            const firstRankData = skillData.ranks ? skillData.ranks[1] : null;
+            
+            return {
+                name: name,
+                icon: skillData.icon || (rankData && rankData.icon) || (firstRankData && firstRankData.icon) || '🔮',
+                desc: (rankData && rankData.desc) || (firstRankData && firstRankData.desc) || `Description for ${name} Rank ${rank}`,
+                statsBonus: (rankData && rankData.statsBonus) || {}
+            };
         }
 
         function isEmoji(str) {

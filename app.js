@@ -279,13 +279,17 @@ async function fetchMinionStats(name, level = 1, specializations = null) {
                     if (skillFound) break;
                 }
                 
-                if (skillFound && skillFound.statsBonus) {
-                    if (skillFound.statsBonus.health) healthBonus += skillFound.statsBonus.health * rank;
-                    if (skillFound.statsBonus.attack) attackBonus += skillFound.statsBonus.attack * rank;
-                    if (skillFound.statsBonus.speed) speedBonus += skillFound.statsBonus.speed * rank;
-                    if (skillFound.statsBonus.healing) healingBonus += skillFound.statsBonus.healing * rank;
+                const skillName = skillFound ? skillFound.name : null;
+                if (skillName) {
+                    const props = getSkillProperties(skillName, rank);
+                    if (props && props.statsBonus) {
+                        if (props.statsBonus.health) healthBonus += props.statsBonus.health;
+                        if (props.statsBonus.attack) attackBonus += props.statsBonus.attack;
+                        if (props.statsBonus.speed) speedBonus += props.statsBonus.speed;
+                        if (props.statsBonus.healing) healingBonus += props.statsBonus.healing;
+                    }
                 } else {
-                    // Fall back to original hardcoded mappings if statsBonus property is missing
+                    // Fall back to original hardcoded mappings if skill is not found in tree
                     if (skillId === 'iron_defense') healthBonus += 5 * rank;
                     if (skillId === 'power_up') attackBonus += 1 * rank;
                     if (skillId === 'haste') speedBonus += 3 * rank;

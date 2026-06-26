@@ -168,27 +168,27 @@ const MINION_SKILL_TREES = {
         trees: {
             'Speed': [
                 [
-                    { id: 'haste', name: 'Haste', max: 3, desc: 'Increases Speed stat by +3 per rank.', icon: '⚡', statsBonus: { speed: 3 } },
-                    { id: 'swift_strike', name: 'Swift Strike', max: 2, desc: 'Increases Critical Hit chance by 10% per rank.', icon: '🦷' },
-                    { id: 'quick_claw', name: 'Quick Claw', max: 1, desc: 'Claw deals +2 damage.', icon: '🐾' }
+                    { id: 'haste', name: 'Haste', max: 3 },
+                    { id: 'swift_strike', name: 'Swift Strike', max: 2 },
+                    { id: 'quick_claw', name: 'Quick Claw', max: 1 }
                 ],
                 [],
                 []
             ],
             'Guard': [
                 [
-                    { id: 'iron_defense', name: 'Iron Defense', max: 3, desc: 'Increases Max Health by +5 per rank.', icon: '🛡️', statsBonus: { health: 5 } },
-                    { id: 'sturdy', name: 'Sturdy', max: 2, desc: 'Reduces incoming damage by 1 per rank.', icon: '🧱' },
-                    { id: 'shield_roar', name: 'Shield Roar', max: 1, desc: 'Roar reduces enemy attack by 15% instead of 10%.', icon: '🦁' }
+                    { id: 'iron_defense', name: 'Iron Defense', max: 3 },
+                    { id: 'sturdy', name: 'Sturdy', max: 2 },
+                    { id: 'shield_roar', name: 'Shield Roar', max: 1 }
                 ],
                 [],
                 []
             ],
             'Normal': [
                 [
-                    { id: 'power_up', name: 'Power Up', max: 3, desc: 'Increases Attack stat by +1 per rank.', icon: '⚔️', statsBonus: { attack: 1 } },
-                    { id: 'heal_boost', name: 'Heal Boost', max: 3, desc: 'Increases Healing stat by +1 per rank.', icon: '🩹', statsBonus: { healing: 1 } },
-                    { id: 'fierce_bite', name: 'Fierce Bite', max: 1, desc: 'TigerBite heals 40% of damage dealt instead of 30%.', icon: '🐯' }
+                    { id: 'power_up', name: 'Power Up', max: 3 },
+                    { id: 'heal_boost', name: 'Heal Boost', max: 3 },
+                    { id: 'fierce_bite', name: 'Fierce Bite', max: 1 }
                 ],
                 [],
                 []
@@ -196,6 +196,99 @@ const MINION_SKILL_TREES = {
         }
     }
 };
+
+const SKILL_DB = {
+    'Haste': {
+        icon: '⚡',
+        ranks: {
+            1: { desc: 'Increases Speed stat by +3.', statsBonus: { speed: 3 } },
+            2: { desc: 'Increases Speed stat by +6.', statsBonus: { speed: 6 } },
+            3: { desc: 'Increases Speed stat by +9.', statsBonus: { speed: 9 } }
+        }
+    },
+    'Swift Strike': {
+        icon: '🦷',
+        ranks: {
+            1: { desc: 'Increases Critical Hit chance by 10%.' },
+            2: { desc: 'Increases Critical Hit chance by 20%.' }
+        }
+    },
+    'Quick Claw': {
+        icon: '🐾',
+        ranks: {
+            1: { desc: 'Claw deals +2 damage.' }
+        }
+    },
+    'Iron Defense': {
+        icon: '🛡️',
+        ranks: {
+            1: { desc: 'Increases Max Health by +5.', statsBonus: { health: 5 } },
+            2: { desc: 'Increases Max Health by +10.', statsBonus: { health: 10 } },
+            3: { desc: 'Increases Max Health by +15.', statsBonus: { health: 15 } }
+        }
+    },
+    'Sturdy': {
+        icon: '🧱',
+        ranks: {
+            1: { desc: 'Reduces incoming damage by 1.' },
+            2: { desc: 'Reduces incoming damage by 2.' }
+        }
+    },
+    'Shield Roar': {
+        icon: '🦁',
+        ranks: {
+            1: { desc: 'Roar reduces enemy attack by 15% instead of 10%.' }
+        }
+    },
+    'Power Up': {
+        icon: '⚔️',
+        ranks: {
+            1: { desc: 'Increases Attack stat by +1.', statsBonus: { attack: 1 } },
+            2: { desc: 'Increases Attack stat by +2.', statsBonus: { attack: 2 } },
+            3: { desc: 'Increases Attack stat by +3.', statsBonus: { attack: 3 } }
+        }
+    },
+    'Heal Boost': {
+        icon: '🩹',
+        ranks: {
+            1: { desc: 'Increases Healing stat by +1.', statsBonus: { healing: 1 } },
+            2: { desc: 'Increases Healing stat by +2.', statsBonus: { healing: 2 } },
+            3: { desc: 'Increases Healing stat by +3.', statsBonus: { healing: 3 } }
+        }
+    },
+    'Fierce Bite': {
+        icon: '🐯',
+        ranks: {
+            1: { desc: 'TigerBite heals 40% of damage dealt instead of 30%.' }
+        }
+    }
+};
+
+function getSkillProperties(name, rank) {
+    const defaultProps = {
+        name: name,
+        icon: '🔮',
+        desc: `No description for ${name} Rank ${rank}`,
+        statsBonus: {}
+    };
+    
+    if (!name) return defaultProps;
+    
+    const skillData = SKILL_DB[name];
+    if (!skillData) {
+        return defaultProps;
+    }
+    
+    const rankData = skillData.ranks ? skillData.ranks[rank] : null;
+    const firstRankData = skillData.ranks ? skillData.ranks[1] : null;
+    
+    return {
+        name: name,
+        icon: skillData.icon || (rankData && rankData.icon) || (firstRankData && firstRankData.icon) || '🔮',
+        desc: (rankData && rankData.desc) || (firstRankData && firstRankData.desc) || `Description for ${name} Rank ${rank}`,
+        statsBonus: (rankData && rankData.statsBonus) || {}
+    };
+}
 
 function getMinionSkillTrees(name) {
     const cleanName = name ? name.replace(/^Boss\s+/, '') : '';

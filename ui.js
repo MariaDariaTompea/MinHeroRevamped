@@ -549,23 +549,29 @@ function updateSkillDashboardUI() {
                 const node = document.createElement('div');
                 node.className = `skill-tree-node ${isLocked ? 'locked' : ''} ${currentRank >= skill.max ? 'maxed' : ''}`;
                 
+                const currentProps = getSkillProperties(skill.name, currentRank || 1);
+                const nextRank = Math.min(skill.max, currentRank + 1);
+                const nextProps = getSkillProperties(skill.name, nextRank);
+                
+                const iconToUse = currentProps.icon || '🔮';
+                
                 node.innerHTML = `
-                    <img src="${getSkillIconPath(skill.icon)}" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';" style="width: 100%; height: 100%; object-fit: cover; border-radius: 5px; z-index: 2;" />
+                    <img src="${getSkillIconPath(iconToUse)}" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';" style="width: 100%; height: 100%; object-fit: cover; border-radius: 5px; z-index: 2;" />
                     <div style="display: none; justify-content: center; align-items: center; width: 100%; height: 100%; z-index: 2; font-size: 24px; color: white;">
-                        ${isEmoji(skill.icon) ? skill.icon : (skill.name[0] || '🔮')}
+                        ${isEmoji(iconToUse) ? iconToUse : (skill.name[0] || '🔮')}
                     </div>
                     <span class="skill-badge" style="z-index: 3;">${currentRank}/${skill.max}</span>
                 `;
                 
-                // Node tooltips
-                let statBonusText = '';
-                if (skill.statsBonus) {
-                    const keys = Object.keys(skill.statsBonus);
-                    if (keys.length > 0) {
-                        statBonusText = `\n(Adds +${skill.statsBonus[keys[0]]} ${keys[0].toUpperCase()} per rank)`;
-                    }
+                // Dynamic Rank-Specific Tooltip
+                let tooltip = `${skill.name} (Rank ${currentRank}/${skill.max})\n`;
+                if (currentRank > 0) {
+                    tooltip += `Current: ${currentProps.desc}\n`;
                 }
-                node.title = `${skill.name}\nRank: ${currentRank}/${skill.max}\n\n${skill.desc}${statBonusText}`;
+                if (currentRank < skill.max) {
+                    tooltip += `Next: ${nextProps.desc}`;
+                }
+                node.title = tooltip.trim();
                 
                 // Point allocation clicks
                 if (!isLocked && activeSkillMinion.skillPoints > 0 && currentRank < skill.max && activeSkillMinion.specialization === activeSkillTab) {
@@ -620,7 +626,7 @@ function updateSpecializationModalUI() {
         const btn = specBtns[i];
         if (btn) {
             const specTree = trees.trees[spec];
-            const starterSkill = (specTree && specTree[0] && specTree[0][0]) || { icon: '❓', id: 'unknown' };
+            const starterSkill = (specTree && specTree[0] && specTree[0][0]) || { name: '', id: 'unknown' };
             
             // Calculate total spent in this path branch
             let allocated = 0;
@@ -632,10 +638,13 @@ function updateSpecializationModalUI() {
                 });
             }
             
+            const starterProps = starterSkill.name ? getSkillProperties(starterSkill.name, 1) : { icon: '🔮' };
+            const iconToUse = starterProps.icon || '🔮';
+            
             btn.innerHTML = `
-                <img src="${getSkillIconPath(starterSkill.icon)}" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';" style="width: 100%; height: 100%; object-fit: cover; border-radius: 5px; z-index: 2;" />
+                <img src="${getSkillIconPath(iconToUse)}" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';" style="width: 100%; height: 100%; object-fit: cover; border-radius: 5px; z-index: 2;" />
                 <div style="display: none; justify-content: center; align-items: center; width: 100%; height: 100%; z-index: 2; font-size: 32px; color: white;">
-                    ${isEmoji(starterSkill.icon) ? starterSkill.icon : (starterSkill.name[0] || '🔮')}
+                    ${isEmoji(iconToUse) ? iconToUse : (starterSkill.name[0] || '🔮')}
                 </div>
                 <div class="spec-badge" style="position:absolute; bottom:-10px; right:-10px; background:black; color:white; font-size:12px; padding:2px 5px; border-radius:10px; font-weight:bold; border:2px solid #333;">${allocated} spent</div>
             `;
