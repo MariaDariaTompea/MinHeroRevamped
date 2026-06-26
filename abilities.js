@@ -152,7 +152,9 @@ class RoarAbility extends Ability {
             // Apply Roar mechanic: lower target's attack by 10% (15% if Shield Roar is active)
             const oldAttack = target.attack;
             const reduction = (user.specializations && user.specializations.shield_roar > 0) ? 0.85 : 0.90;
-            target.attack = Math.max(1, Math.floor(target.attack * reduction));
+            const reducedAttack = Math.floor(target.attack * reduction);
+            const actualReduction = target.attack - reducedAttack;
+            target.attack = Math.max(1, actualReduction < 1 ? target.attack - 1 : reducedAttack);
             logCombat(`${target.name}'s Attack fell from ${oldAttack} to ${target.attack}!`);
             
             // Spawn animation over target
