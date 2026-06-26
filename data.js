@@ -85,6 +85,168 @@ const ABILITY_DB = {
         desc: 'Basic bite attack.',
         color: '#cccccc',
         targetType: 'single_enemy'
+    },
+    'Punch 1': {
+        name: 'Punch 1',
+        cost: 3,
+        damage: 5,
+        element: 'FIRE',
+        desc: 'A quick punch that deals moderate fire damage.',
+        color: '#e67e22',
+        targetType: 'single_enemy'
+    },
+    'punch_1': {
+        name: 'Punch 1',
+        cost: 3,
+        damage: 5,
+        element: 'FIRE',
+        desc: 'A quick punch that deals moderate fire damage.',
+        color: '#e67e22',
+        targetType: 'single_enemy'
+    },
+    'Punch 2': {
+        name: 'Punch 2',
+        cost: 5,
+        damage: 9,
+        element: 'FIRE',
+        desc: 'A heavy fire punch that deals massive damage.',
+        color: '#e74c3c',
+        targetType: 'single_enemy'
+    },
+    'punch_2': {
+        name: 'Punch 2',
+        cost: 5,
+        damage: 9,
+        element: 'FIRE',
+        desc: 'A heavy fire punch that deals massive damage.',
+        color: '#e74c3c',
+        targetType: 'single_enemy'
+    },
+    'Tackle 1': {
+        name: 'Tackle 1',
+        cost: 2,
+        damage: 4,
+        element: 'NORMAL',
+        desc: 'Tackles the opponent for physical damage.',
+        color: '#95a5a6',
+        targetType: 'single_enemy'
+    },
+    'tackle_1': {
+        name: 'Tackle 1',
+        cost: 2,
+        damage: 4,
+        element: 'NORMAL',
+        desc: 'Tackles the opponent for physical damage.',
+        color: '#95a5a6',
+        targetType: 'single_enemy'
+    },
+    'Tackle 2': {
+        name: 'Tackle 2',
+        cost: 4,
+        damage: 8,
+        element: 'NORMAL',
+        desc: 'A heavy charge that slams the opponent.',
+        color: '#7f8c8d',
+        targetType: 'single_enemy'
+    },
+    'tackle_2': {
+        name: 'Tackle 2',
+        cost: 4,
+        damage: 8,
+        element: 'NORMAL',
+        desc: 'A heavy charge that slams the opponent.',
+        color: '#7f8c8d',
+        targetType: 'single_enemy'
+    },
+    'Paper Plane 1': {
+        name: 'Paper Plane 1',
+        cost: 3,
+        damage: 5,
+        element: 'FLYING',
+        desc: 'Throws a fast paper plane at the target.',
+        color: '#3498db',
+        targetType: 'single_enemy'
+    },
+    'paper_plane_1': {
+        name: 'Paper Plane 1',
+        cost: 3,
+        damage: 5,
+        element: 'FLYING',
+        desc: 'Throws a fast paper plane at the target.',
+        color: '#3498db',
+        targetType: 'single_enemy'
+    },
+    'Paper Plane 2': {
+        name: 'Paper Plane 2',
+        cost: 5,
+        damage: 9,
+        element: 'FLYING',
+        desc: 'Launches a swarm of planes dealing massive FLYING damage.',
+        color: '#2980b9',
+        targetType: 'single_enemy'
+    },
+    'paper_plane_2': {
+        name: 'Paper Plane 2',
+        cost: 5,
+        damage: 9,
+        element: 'FLYING',
+        desc: 'Launches a swarm of planes dealing massive FLYING damage.',
+        color: '#2980b9',
+        targetType: 'single_enemy'
+    },
+    'Jaguar Dash 1': {
+        name: 'Jaguar Dash 1',
+        cost: 4,
+        damage: 6,
+        element: 'NORMAL',
+        desc: 'Dashes forward striking the enemy swiftly.',
+        color: '#1abc9c',
+        targetType: 'single_enemy'
+    },
+    'jaguar_dash_1': {
+        name: 'Jaguar Dash 1',
+        cost: 4,
+        damage: 6,
+        element: 'NORMAL',
+        desc: 'Dashes forward striking the enemy swiftly.',
+        color: '#1abc9c',
+        targetType: 'single_enemy'
+    },
+    'Jaguar Dash 2': {
+        name: 'Jaguar Dash 2',
+        cost: 6,
+        damage: 10,
+        element: 'NORMAL',
+        desc: 'A supersonic dash strike dealing extreme damage.',
+        color: '#16a085',
+        targetType: 'single_enemy'
+    },
+    'jaguar_dash_2': {
+        name: 'Jaguar Dash 2',
+        cost: 6,
+        damage: 10,
+        element: 'NORMAL',
+        desc: 'A supersonic dash strike dealing extreme damage.',
+        color: '#16a085',
+        targetType: 'single_enemy'
+    },
+    'Roar 2': {
+        name: 'Roar 2',
+        cost: 4,
+        damage: 2,
+        element: 'NORMAL',
+        desc: 'A terrifying roar that reduces target damage by 20% and deals 2 damage.',
+        color: '#f39c12',
+        targetType: 'single_enemy'
+    },
+    'roar_2': {
+        name: 'Roar 2',
+        cost: 4,
+        damage: 2,
+        element: 'NORMAL',
+        desc: 'A terrifying roar that reduces target damage by 20% and deals 2 damage.',
+        color: '#f39c12',
+        targetType: 'single_enemy'
     }
 };
 
@@ -186,12 +348,21 @@ const MINION_SKILL_TREES = {
             ],
             'Normal': [
                 [
-                    { id: 'power_up', name: 'Power Up', max: 3 },
-                    { id: 'heal_boost', name: 'Heal Boost', max: 3 },
-                    { id: 'fierce_bite', name: 'Fierce Bite', max: 1 }
+                    { id: 'punch_1', name: 'Punch 1', max: 3 },
+                    { id: 'punch_2', name: 'Punch 2', max: 1 },
+                    { id: 'tackle_1', name: 'Tackle 1', max: 2 },
+                    { id: 'tackle_2', name: 'Tackle 2', max: 2 }
                 ],
-                [],
-                []
+                [
+                    { id: 'claw_2', name: 'Claw 2', max: 3 },
+                    { id: 'paper_plane_1', name: 'Paper Plane 1', max: 3 },
+                    { id: 'paper_plane_2', name: 'Paper Plane 2', max: 3 }
+                ],
+                [
+                    { id: 'roar_2', name: 'Roar 2', max: 1 },
+                    { id: 'jaguar_dash_1', name: 'Jaguar Dash 1', max: 3 },
+                    { id: 'jaguar_dash_2', name: 'Jaguar Dash 2', max: 2 }
+                ]
             ]
         }
     }
@@ -240,26 +411,77 @@ const SKILL_DB = {
             1: { desc: 'Roar reduces enemy attack by 15% instead of 10%.' }
         }
     },
-    'Power Up': {
+    'Punch 1': {
+        icon: '👊',
+        ranks: {
+            1: { desc: 'Unlocks Punch 1 ability: Deals FIRE damage.' },
+            2: { desc: 'Increases Punch 1 base damage by +2.' },
+            3: { desc: 'Increases Punch 1 base damage by +4.' }
+        }
+    },
+    'Punch 2': {
+        icon: '💥',
+        ranks: {
+            1: { desc: 'Unlocks Punch 2 ability: A crushing blow dealing massive FIRE damage.' }
+        }
+    },
+    'Tackle 1': {
+        icon: '🐗',
+        ranks: {
+            1: { desc: 'Unlocks Tackle 1 ability: Tackles the opponent for physical damage.' },
+            2: { desc: 'Increases Tackle 1 base damage by +2.' }
+        }
+    },
+    'Tackle 2': {
+        icon: '🐂',
+        ranks: {
+            1: { desc: 'Unlocks Tackle 2 ability: A heavy slam dealing high physical damage.', statsBonus: {} },
+            2: { desc: 'Increases Tackle 2 base damage by +3.' }
+        }
+    },
+    'Claw 2': {
         icon: '⚔️',
         ranks: {
-            1: { desc: 'Increases Attack stat by +1.', statsBonus: { attack: 1 } },
-            2: { desc: 'Increases Attack stat by +2.', statsBonus: { attack: 2 } },
-            3: { desc: 'Increases Attack stat by +3.', statsBonus: { attack: 3 } }
+            1: { desc: 'Unlocks Claw 2 ability: Upgraded slash dealing FIRE damage.' },
+            2: { desc: 'Increases Claw 2 base damage by +2.' },
+            3: { desc: 'Increases Claw 2 base damage by +4.' }
         }
     },
-    'Heal Boost': {
-        icon: '🩹',
+    'Paper Plane 1': {
+        icon: '✈️',
         ranks: {
-            1: { desc: 'Increases Healing stat by +1.', statsBonus: { healing: 1 } },
-            2: { desc: 'Increases Healing stat by +2.', statsBonus: { healing: 2 } },
-            3: { desc: 'Increases Healing stat by +3.', statsBonus: { healing: 3 } }
+            1: { desc: 'Unlocks Paper Plane 1 ability: Throws a paper plane dealing FLYING damage.' },
+            2: { desc: 'Increases Paper Plane 1 base damage by +2.' },
+            3: { desc: 'Increases Paper Plane 1 base damage by +4.' }
         }
     },
-    'Fierce Bite': {
-        icon: '🐯',
+    'Paper Plane 2': {
+        icon: '🛩️',
         ranks: {
-            1: { desc: 'TigerBite heals 40% of damage dealt instead of 30%.' }
+            1: { desc: 'Unlocks Paper Plane 2 ability: Launches a swarm of planes dealing massive FLYING damage.' },
+            2: { desc: 'Increases Paper Plane 2 base damage by +3.' },
+            3: { desc: 'Increases Paper Plane 2 base damage by +6.' }
+        }
+    },
+    'Roar 2': {
+        icon: '📣',
+        ranks: {
+            1: { desc: 'Unlocks Roar 2 ability: Terrifying roar that reduces target damage by 20% and deals 2 damage.' }
+        }
+    },
+    'Jaguar Dash 1': {
+        icon: '🐆',
+        ranks: {
+            1: { desc: 'Unlocks Jaguar Dash 1 ability: A swift dash attack dealing physical damage.' },
+            2: { desc: 'Increases Jaguar Dash 1 base damage by +2.' },
+            3: { desc: 'Increases Jaguar Dash 1 base damage by +4.' }
+        }
+    },
+    'Jaguar Dash 2': {
+        icon: '⚡',
+        ranks: {
+            1: { desc: 'Unlocks Jaguar Dash 2 ability: A supersonic strike dealing extreme physical damage.' },
+            2: { desc: 'Increases Jaguar Dash 2 base damage by +3.' }
         }
     }
 };

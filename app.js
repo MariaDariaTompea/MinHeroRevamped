@@ -464,20 +464,95 @@ function processNextTurn() {
     }
 }
 
+function getMinionActiveMoves(player) {
+    const moves = ['Claw', 'Roar', 'TigerBite'];
+    
+    if (player.specializations) {
+        // Handle Claw 2 replacing Claw
+        if (player.specializations.claw_2 > 0) {
+            const idx = moves.indexOf('Claw');
+            if (idx !== -1) moves[idx] = 'Claw 2';
+        }
+        
+        // Handle Roar 2 replacing Roar
+        if (player.specializations.roar_2 > 0) {
+            const idx = moves.indexOf('Roar');
+            if (idx !== -1) moves[idx] = 'Roar 2';
+        }
+        
+        // Handle Punch 1 / Punch 2
+        if (player.specializations.punch_1 > 0) {
+            if (player.specializations.punch_2 > 0) {
+                moves.push('Punch 2');
+            } else {
+                moves.push('Punch 1');
+            }
+        }
+        
+        // Handle Tackle 1 / Tackle 2
+        if (player.specializations.tackle_1 > 0) {
+            if (player.specializations.tackle_2 > 0) {
+                moves.push('Tackle 2');
+            } else {
+                moves.push('Tackle 1');
+            }
+        }
+        
+        // Handle Paper Plane 1 / Paper Plane 2
+        if (player.specializations.paper_plane_1 > 0) {
+            if (player.specializations.paper_plane_2 > 0) {
+                moves.push('Paper Plane 2');
+            } else {
+                moves.push('Paper Plane 1');
+            }
+        }
+        
+        // Handle Jaguar Dash 1 / Jaguar Dash 2
+        if (player.specializations.jaguar_dash_1 > 0) {
+            if (player.specializations.jaguar_dash_2 > 0) {
+                moves.push('Jaguar Dash 2');
+            } else {
+                moves.push('Jaguar Dash 1');
+            }
+        }
+    }
+    
+    return moves;
+}
+
 function spawnAbilityNodes(player, slotElem) {
     if(!slotElem) return;
     
-    const abilities = [
-        { name: 'Claw', cost: 2, desc: 'Deals damage to one opponent for a very small mana price.', color: '#e0cca8', targetType: 'single_enemy' },
-        { name: 'Roar', cost: 3, desc: 'Scares opponent making them deal less damage the entire game by 10%.', color: '#f1c40f', targetType: 'single_enemy' },
-        { name: 'TigerBite', cost: 9, desc: 'Deals damage and regenerates 30% of damage dealt.', color: '#d35400', targetType: 'single_enemy' }
-    ];
+    const moveNames = getMinionActiveMoves(player);
+    const abilities = [];
     
-    const positions = [
-        { top: '-130px', left: '170px' },
-        { top: '0px', left: '230px' },
-        { top: '130px', left: '170px' }
-    ];
+    moveNames.forEach(name => {
+        const abData = ABILITY_DB[name];
+        if (abData) {
+            abilities.push({
+                name: name,
+                cost: abData.cost,
+                desc: abData.desc,
+                color: abData.color || '#cccccc',
+                targetType: abData.targetType || 'single_enemy'
+            });
+        }
+    });
+    
+    const count = abilities.length;
+    const positions = [];
+    
+    const totalSpan = (count - 1) * (36 / Math.max(1, count - 1)) * (Math.PI / 180); // max angle span
+    const startAngle = -totalSpan / 2;
+    const angleStep = count > 1 ? totalSpan / (count - 1) : 0;
+    
+    for (let i = 0; i < count; i++) {
+        const angle = startAngle + i * angleStep;
+        const radialDist = 180 + Math.cos(angle) * 30; 
+        const top = Math.round(Math.sin(angle) * radialDist) + "px";
+        const left = Math.round(Math.cos(angle) * radialDist) + "px";
+        positions.push({ top, left });
+    }
     
     abilities.forEach((ab, i) => {
         const nodeContainer = document.createElement('div');
