@@ -550,7 +550,10 @@ function updateSkillDashboardUI() {
                 node.className = `skill-tree-node ${isLocked ? 'locked' : ''} ${currentRank >= skill.max ? 'maxed' : ''}`;
                 
                 node.innerHTML = `
-                    <span style="z-index: 2;">${skill.icon}</span>
+                    <img src="${getSkillIconPath(skill.icon)}" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';" style="width: 100%; height: 100%; object-fit: cover; border-radius: 5px; z-index: 2;" />
+                    <div style="display: none; justify-content: center; align-items: center; width: 100%; height: 100%; z-index: 2; font-size: 24px; color: white;">
+                        ${isEmoji(skill.icon) ? skill.icon : (skill.name[0] || '🔮')}
+                    </div>
                     <span class="skill-badge" style="z-index: 3;">${currentRank}/${skill.max}</span>
                 `;
                 
@@ -630,7 +633,10 @@ function updateSpecializationModalUI() {
             }
             
             btn.innerHTML = `
-                ${starterSkill.icon}
+                <img src="${getSkillIconPath(starterSkill.icon)}" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';" style="width: 100%; height: 100%; object-fit: cover; border-radius: 5px; z-index: 2;" />
+                <div style="display: none; justify-content: center; align-items: center; width: 100%; height: 100%; z-index: 2; font-size: 32px; color: white;">
+                    ${isEmoji(starterSkill.icon) ? starterSkill.icon : (starterSkill.name[0] || '🔮')}
+                </div>
                 <div class="spec-badge" style="position:absolute; bottom:-10px; right:-10px; background:black; color:white; font-size:12px; padding:2px 5px; border-radius:10px; font-weight:bold; border:2px solid #333;">${allocated} spent</div>
             `;
             
@@ -644,4 +650,19 @@ function updateSpecializationModalUI() {
             }
         }
     });
+}
+
+function isEmoji(str) {
+    if (!str) return false;
+    const charCode = str.charCodeAt(0);
+    return str.length <= 4 && (charCode > 127 || charCode === 0);
+}
+
+function getSkillIconPath(icon) {
+    if (!icon) return 'assets/skills/default.png';
+    if (icon.includes('/') || icon.includes('\\')) return icon;
+    if (icon.endsWith('.png') || icon.endsWith('.jpg') || icon.endsWith('.gif')) {
+        return `assets/skills/${icon}`;
+    }
+    return `assets/skills/${icon}.png`;
 }

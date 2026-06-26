@@ -265,8 +265,52 @@ class BiteAbility extends Ability {
     }
 }
 
+class Claw1Ability extends ClawAbility {
+    constructor() {
+        super();
+        this.name = 'Claw1';
+        this.cost = 2;
+        this.damage = 4;
+        this.desc = 'Deals fire damage to one opponent.';
+    }
+}
+
+class Claw2Ability extends ClawAbility {
+    constructor() {
+        super();
+        this.name = 'Claw2';
+        this.cost = 3;
+        this.damage = 7;
+        this.desc = 'An upgraded version of Claw. Deals more fire damage.';
+    }
+}
+
+class Claw1SpaceAbility extends ClawAbility {
+    constructor() {
+        super();
+        this.name = 'Claw 1';
+        this.cost = 2;
+        this.damage = 4;
+        this.desc = 'Deals fire damage to one opponent.';
+    }
+}
+
+class Claw2SpaceAbility extends ClawAbility {
+    constructor() {
+        super();
+        this.name = 'Claw 2';
+        this.cost = 3;
+        this.damage = 7;
+        this.desc = 'An upgraded version of Claw. Deals more fire damage.';
+    }
+}
+
 const AbilityRegistry = {
     'Claw': new ClawAbility(),
+    'Claw1': new Claw1Ability(),
+    'Claw2': new Claw2Ability(),
+    'Claw 1': new Claw1SpaceAbility(),
+    'Claw 2': new Claw2SpaceAbility(),
     'Roar': new RoarAbility(),
     'TigerBite': new TigerBiteAbility(),
     'Bite': new BiteAbility()

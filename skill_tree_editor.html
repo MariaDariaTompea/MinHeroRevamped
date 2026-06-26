@@ -836,7 +836,7 @@
                                 <input type="text" value="${node.name}" oninput="updateNodeField(${c}, ${idx}, 'name', this.value)">
                             </div>
                             <div>
-                                <label>Emoji Icon</label>
+                                <label>Icon (Emoji/File)</label>
                                 <input type="text" value="${node.icon}" style="text-align: center;" oninput="updateNodeField(${c}, ${idx}, 'icon', this.value)">
                             </div>
                         </div>
@@ -946,7 +946,12 @@
                     card.className = 'spec-card';
                     card.innerHTML = `
                         <div style="color: yellow; font-size: 14px; font-weight: bold;">${spec}</div>
-                        <div class="spec-card-icon">${starter.icon}</div>
+                        <div class="spec-card-icon" style="position: relative; overflow: hidden; width: 55px; height: 55px; border: 2px solid #444; border-radius: 8px; display: flex; align-items: center; justify-content: center; background: rgba(255,255,255,0.05);">
+                            <img src="${getSkillIconPath(starter.icon)}" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';" style="width: 100%; height: 100%; object-fit: cover; border-radius: 5px; z-index: 2;" />
+                            <div style="display: none; justify-content: center; align-items: center; width: 100%; height: 100%; z-index: 2; font-size: 32px; color: white;">
+                                ${isEmoji(starter.icon) ? starter.icon : (starter.name[0] || '🔮')}
+                            </div>
+                        </div>
                         <div style="font-size: 10px; color: #aaa; text-align: center;">Starter:<br>${starter.name}</div>
                     `;
                     card.onclick = () => previewAllocateSpec(spec);
@@ -999,8 +1004,11 @@
                         const nodeDiv = document.createElement('div');
                         nodeDiv.className = `preview-node ${isLocked ? 'locked' : ''} ${rank >= node.max ? 'maxed' : ''}`;
                         nodeDiv.innerHTML = `
-                            <span>${node.icon}</span>
-                            <span class="preview-badge">${rank}/${node.max}</span>
+                            <img src="${getSkillIconPath(node.icon)}" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';" style="width: 100%; height: 100%; object-fit: cover; border-radius: 5px; z-index: 2;" />
+                            <div style="display: none; justify-content: center; align-items: center; width: 100%; height: 100%; z-index: 2; font-size: 24px; color: white;">
+                                ${isEmoji(node.icon) ? node.icon : (node.name[0] || '🔮')}
+                            </div>
+                            <span class="preview-badge" style="z-index: 3;">${rank}/${node.max}</span>
                         `;
                         
                         // Tooltip
@@ -1151,6 +1159,21 @@
                 alert("Error importing JSON: " + e.message);
                 console.error(e);
             }
+        }
+
+        function isEmoji(str) {
+            if (!str) return false;
+            const charCode = str.charCodeAt(0);
+            return str.length <= 4 && (charCode > 127 || charCode === 0);
+        }
+
+        function getSkillIconPath(icon) {
+            if (!icon) return 'assets/skills/default.png';
+            if (icon.includes('/') || icon.includes('\\')) return icon;
+            if (icon.endsWith('.png') || icon.endsWith('.jpg') || icon.endsWith('.gif')) {
+                return `assets/skills/${icon}`;
+            }
+            return `assets/skills/${icon}.png`;
         }
     </script>
 </body>

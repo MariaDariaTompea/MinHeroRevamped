@@ -22,6 +22,42 @@ const ABILITY_DB = {
         color: '#e0cca8',
         targetType: 'single_enemy'
     },
+    'Claw1': {
+        name: 'Claw1',
+        cost: 2,
+        damage: 4,
+        element: 'FIRE',
+        desc: 'Deals fire damage to one opponent.',
+        color: '#e0cca8',
+        targetType: 'single_enemy'
+    },
+    'Claw2': {
+        name: 'Claw2',
+        cost: 3,
+        damage: 7,
+        element: 'FIRE',
+        desc: 'An upgraded version of Claw. Deals more fire damage.',
+        color: '#d35400',
+        targetType: 'single_enemy'
+    },
+    'Claw 1': {
+        name: 'Claw 1',
+        cost: 2,
+        damage: 4,
+        element: 'FIRE',
+        desc: 'Deals fire damage to one opponent.',
+        color: '#e0cca8',
+        targetType: 'single_enemy'
+    },
+    'Claw 2': {
+        name: 'Claw 2',
+        cost: 3,
+        damage: 7,
+        element: 'FIRE',
+        desc: 'An upgraded version of Claw. Deals more fire damage.',
+        color: '#d35400',
+        targetType: 'single_enemy'
+    },
     'Roar': {
         name: 'Roar',
         cost: 3,
