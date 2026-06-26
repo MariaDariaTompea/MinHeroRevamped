@@ -826,7 +826,7 @@ async function handleCombatWin(earnedStars) {
     }
     
     processLevelUpQueue(() => {
-        finishCombatWin(progressed, nextFloor, nextRoom);
+        finishCombatWin(progressed, nextFloor, nextRoom, xpGained);
     });
 }
 
@@ -835,26 +835,27 @@ function processLevelUpQueue(onComplete) {
         if (gainedSkillPointGlobal) {
             const candidate = state.army.find(m => m.skillPoints > 0);
             if (candidate) {
-                activeSkillMinion = candidate;
-                activeSkillTab = 'Speed';
-                updateSkillDashboardUI();
+                currentActiveMinion = candidate;
+                updateSpecializationModalUI();
+                const modal = document.getElementById('specialization-modal');
+                modal.classList.remove('hidden');
+                
+                // Add a temporary close button or behavior if needed, but the modal already has a close button usually
+                const closeBtn = document.getElementById('spec-btn-close-x');
+                if (closeBtn) {
+                    const newCloseBtn = closeBtn.cloneNode(true);
+                    closeBtn.parentNode.replaceChild(newCloseBtn, closeBtn);
+                    newCloseBtn.addEventListener('click', () => {
+                        modal.classList.add('hidden');
+                        onComplete();
+                    });
+                } else {
+                    // Fallback if no close button
+                    setTimeout(() => { onComplete(); }, 100);
+                }
+            } else {
+                onComplete();
             }
-            
-            const dashboard = document.getElementById('skill-dashboard');
-            dashboard.classList.remove('hidden');
-            setTimeout(() => { dashboard.classList.add('slide-down'); }, 50);
-            
-            const closeBtn = document.getElementById('btn-close-skill-dashboard');
-            const newCloseBtn = closeBtn.cloneNode(true);
-            closeBtn.parentNode.replaceChild(newCloseBtn, closeBtn);
-            
-            newCloseBtn.addEventListener('click', () => {
-                dashboard.classList.remove('slide-down');
-                setTimeout(() => { 
-                    dashboard.classList.add('hidden'); 
-                    onComplete();
-                }, 500);
-            });
         } else {
             onComplete();
         }
