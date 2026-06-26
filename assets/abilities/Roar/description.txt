@@ -1,6 +1,0 @@
-DESCRIPTION IN GAME: Scares opponent making them deal less damamge the entire game by 10%.
-INGAME MECHANIC TO IMPLEMENT:This ability is single target(you choose on who to apply the ability. It lowers the damage of that target the entire game by 10% and you can scale the effect by applying it more turns)
-MANA COST:3
-MANA REGENERATION:none
-HEALTH REGENERATION:none
-TURN OFF:normal effect(the character doesn't stop attacking next turn)
