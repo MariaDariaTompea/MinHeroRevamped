@@ -67,8 +67,27 @@ const ABILITY_DB = {
         color: '#f1c40f',
         targetType: 'single_enemy'
     },
+    'Roar 1': {
+        name: 'Roar 1',
+        cost: 3,
+        damage: 0,
+        element: 'NORMAL',
+        desc: 'Scares opponent making them deal less damage the entire game by 10%.',
+        color: '#f1c40f',
+        targetType: 'single_enemy'
+    },
     'TigerBite': {
         name: 'TigerBite',
+        cost: 9,
+        damage: 6,
+        element: 'NORMAL',
+        desc: 'Deals damage and regenerates 30% of damage dealt.',
+        color: '#d35400',
+        targetType: 'single_enemy',
+        cooldown: 2
+    },
+    'TigerBite 1': {
+        name: 'TigerBite 1',
         cost: 9,
         damage: 6,
         element: 'NORMAL',

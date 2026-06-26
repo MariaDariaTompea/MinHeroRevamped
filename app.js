@@ -465,18 +465,18 @@ function processNextTurn() {
 }
 
 function getMinionActiveMoves(player) {
-    const moves = ['Claw', 'Roar', 'TigerBite'];
+    const moves = ['Claw 1', 'Roar 1', 'TigerBite 1'];
     
     if (player.specializations) {
-        // Handle Claw 2 replacing Claw
+        // Handle Claw 2 replacing Claw 1
         if (player.specializations.claw_2 > 0) {
-            const idx = moves.indexOf('Claw');
+            const idx = moves.indexOf('Claw 1');
             if (idx !== -1) moves[idx] = 'Claw 2';
         }
         
-        // Handle Roar 2 replacing Roar
+        // Handle Roar 2 replacing Roar 1
         if (player.specializations.roar_2 > 0) {
-            const idx = moves.indexOf('Roar');
+            const idx = moves.indexOf('Roar 1');
             if (idx !== -1) moves[idx] = 'Roar 2';
         }
         
@@ -542,13 +542,15 @@ function spawnAbilityNodes(player, slotElem) {
     const count = abilities.length;
     const positions = [];
     
-    const totalSpan = (count - 1) * (36 / Math.max(1, count - 1)) * (Math.PI / 180); // max angle span
-    const startAngle = -totalSpan / 2;
-    const angleStep = count > 1 ? totalSpan / (count - 1) : 0;
+    // Use a fixed angle step of 32 degrees (in radians) to ensure sufficient vertical spacing and prevent overlap
+    const angleStep = 32 * (Math.PI / 180);
+    const startAngle = -((count - 1) * angleStep) / 2;
+    const radius = 200;
     
     for (let i = 0; i < count; i++) {
         const angle = startAngle + i * angleStep;
-        const radialDist = 180 + Math.cos(angle) * 30; 
+        // Add a slight cosine/horizontal offset to make the center bulge out dynamically
+        const radialDist = radius + Math.cos(angle) * 20;
         const top = Math.round(Math.sin(angle) * radialDist) + "px";
         const left = Math.round(Math.cos(angle) * radialDist) + "px";
         positions.push({ top, left });

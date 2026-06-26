@@ -486,7 +486,7 @@ class Roar2Ability extends Ability {
                 targetSlot.appendChild(anim);
                 
                 let frame = 1;
-                anim.src = `assets/abilities/Roar/effect/frame${frame}.png`;
+                anim.src = `assets/abilities/Roar 1/effect/frame${frame}.png`;
                 
                 const interval = setInterval(() => {
                     frame++;
@@ -496,7 +496,7 @@ class Roar2Ability extends Ability {
                         targetSlot.classList.remove('targeted');
                         spawnStatusPopup(target, 'Attack ⬇️⬇️', false, '#ff3333');
                     } else {
-                        anim.src = `assets/abilities/Roar/effect/frame${frame}.png`;
+                        anim.src = `assets/abilities/Roar 1/effect/frame${frame}.png`;
                     }
                 }, 200);
             }
@@ -515,9 +515,11 @@ const AbilityRegistry = {
     'Claw 1': new Claw1SpaceAbility(),
     'Claw 2': new Claw2SpaceAbility(),
     'Roar': new RoarAbility(),
+    'Roar 1': new RoarAbility(),
     'Roar 2': new Roar2Ability(),
     'roar_2': new Roar2Ability(),
     'TigerBite': new TigerBiteAbility(),
+    'TigerBite 1': new TigerBiteAbility(),
     'Bite': new BiteAbility(),
     'Punch 1': new Punch1Ability(),
     'punch_1': new Punch1Ability(),
