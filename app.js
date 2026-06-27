@@ -374,7 +374,8 @@ async function startLevelCombat(floor, room, isBoss) {
             element: stats.element,
             isDead: false,
             side: 'enemy',
-            index: i
+            index: i,
+            cooldowns: {}
         });
     }
     
@@ -674,11 +675,96 @@ async function enemyAIAction(enemy) {
     combatState.state = 'ANIMATING';
     
     const alivePlayers = combatState.players.filter(p => !p.isDead);
-    if(alivePlayers.length > 0) {
-        const target = alivePlayers[Math.floor(Math.random() * alivePlayers.length)];
+    if(alivePlayers.length === 0) {
+        renderCombatUI();
+        setTimeout(advanceTurn, 1000);
+        return;
+    }
+    
+    // Available moves for the enemy
+    const moveNames = ['TigerBite 1', 'Claw 1', 'Roar 1', 'Bite'];
+    const validMoveChoices = [];
+    
+    moveNames.forEach(name => {
+        const ab = AbilityRegistry[name];
+        if (!ab) return;
         
-        const biteAbility = AbilityRegistry['Bite'];
-        biteAbility.execute(enemy, target);
+        // Check energy cost
+        if (enemy.energy < (ab.cost || 0)) return;
+        
+        // Check cooldown state
+        if (enemy.cooldowns && enemy.cooldowns[name] > 0) return;
+        
+        validMoveChoices.push({ name, ab });
+    });
+    
+    // Fallback if no moves are valid (always have Bite)
+    if (validMoveChoices.length === 0) {
+        validMoveChoices.push({ name: 'Bite', ab: AbilityRegistry['Bite'] });
+    }
+    
+    let bestMove = null;
+    let bestTarget = null;
+    let bestScore = -Infinity;
+    
+    validMoveChoices.forEach(choice => {
+        const ab = choice.ab;
+        
+        alivePlayers.forEach(player => {
+            let score = 0;
+            
+            if (choice.name === 'Roar 1' || choice.name === 'Roar') {
+                // Debuff AI: Target the player with the highest attack
+                score = (player.attack || 10) * 1.2;
+                if (combatState.currentTurnIndex <= 2) score += 5; // Open with roar
+            } else {
+                // Damaging AI
+                let dmg = (enemy.attack || 5) + (ab.damage || 0);
+                
+                // Elemental Matchup
+                const matchup = elementalMatchups[ab.element] || { strong: [], weak: [] };
+                if (matchup.strong.includes(player.element)) {
+                    dmg *= 1.75;
+                } else if (matchup.weak.includes(player.element)) {
+                    dmg *= 0.5;
+                }
+                
+                // Sturdy Reduction
+                if (player.specializations && player.specializations.sturdy > 0) {
+                    dmg = Math.max(0, dmg - player.specializations.sturdy);
+                }
+                
+                score = dmg;
+                
+                // Extra value for TigerBite heal component
+                if (choice.name === 'TigerBite 1' || choice.name === 'TigerBite') {
+                    const healPotential = enemy.maxHealth - enemy.currentHealth;
+                    score += Math.min(healPotential, dmg * 0.3);
+                }
+                
+                // High priority for KOs
+                if (dmg >= player.currentHealth) {
+                    score += 150;
+                }
+            }
+            
+            // Add a tiny random variance
+            score += Math.random() * 2;
+            
+            if (score > bestScore) {
+                bestScore = score;
+                bestMove = choice;
+                bestTarget = player;
+            }
+        });
+    });
+    
+    if (bestMove && bestTarget) {
+        logCombat(`${enemy.name} evaluates moves... chooses ${bestMove.name} on ${bestTarget.name}!`);
+        bestMove.ab.execute(enemy, bestTarget);
+    } else {
+        const fallbackTarget = alivePlayers[Math.floor(Math.random() * alivePlayers.length)];
+        AbilityRegistry['Bite'].execute(enemy, fallbackTarget);
     }
     
     renderCombatUI();
@@ -733,34 +819,90 @@ function checkWinCondition() {
 // --- Level Up & Persistence Logic ---
 let levelUpQueue = [];
 let gainedSkillPointGlobal = false;
+let onSpecializationModalClose = null;
 
 async function handleCombatWin(earnedStars) {
     if (earnedStars === undefined) {
-        earnedStars = combatState.enemies.filter(e => e.isDead).length;
+        const faintedPlayers = combatState.players.filter(p => p.isDead).length;
+        if (faintedPlayers <= 1) {
+            earnedStars = 3;
+        } else if (faintedPlayers === 2) {
+            earnedStars = 2;
+        } else {
+            earnedStars = 1;
+        }
     }
     let earnedMoney = 50 + (state.skills.coinBoost.rank * 10);
     
-    let xpGained = 0;
-    combatState.enemies.forEach(e => {
-        if (e.isDead) {
-            xpGained += (e.level || 1) * 50; 
+    // Base XP for the battle
+    let baseXP = 850;
+    let activeOpponentsCount = 0;
+    
+    combatState.enemies.forEach(enemy => {
+        if (enemy) {
+            activeOpponentsCount++;
+            // Support database-driven expGainRate, default to NORMAL
+            const rate = enemy.expGainRate || 'NORMAL';
+            if (rate === 'VERY_EASY') baseXP -= 70;
+            else if (rate === 'EASY') baseXP -= 35;
+            else if (rate === 'HARD') baseXP += 35;
+            else if (rate === 'VERY_HARD') baseXP += 70;
         }
     });
-    
-    if (state.skills.xpBoost && state.skills.xpBoost.rank > 0) {
-        xpGained += state.skills.xpBoost.rank * 10;
-    }
+
+    const opponentLevel = (combatState.enemies[0] && combatState.enemies[0].level) || 1;
+    const isFloorTower = (combatState.currentFloor || 0) > 0;
     
     levelUpQueue = [];
     gainedSkillPointGlobal = false;
+    
+    // Track XP gained per minion for the victory popup
+    const xpDetails = [];
     
     for (let p of combatState.players) {
         const origMinion = state.army[p.index];
         if (!origMinion) continue;
         
         if (p.xp === undefined) p.xp = 0;
-        if (p.maxXP === undefined) p.maxXP = p.level * 100;
+        p.maxXP = 1000;
         if (p.skillPoints === undefined) p.skillPoints = 0;
+        
+        // 1. Calculate dynamic XP for this minion based on level difference
+        let diff = p.level - opponentLevel;
+        if (isFloorTower) {
+            // Add slight random offset (-1, 0, or 1) as in the original game
+            const randOffset = Math.floor(Math.random() * 3) - 1;
+            diff += randOffset;
+        }
+        
+        let xpGained = baseXP;
+        
+        if (diff > 0) {
+            // Over-leveled: halve the XP for every level of difference
+            for (let i = 0; i < diff; i++) {
+                xpGained /= 2;
+            }
+            if (xpGained < 50) xpGained = 50; // Cap floor
+        } else if (diff < 0) {
+            // Under-leveled: catch-up bonus (+33% per level difference)
+            xpGained += diff * (baseXP / 3) * -1;
+        }
+        
+        // Adjust by player minion's own XP rate modifier
+        const pRate = p.expGainRate || 'NORMAL';
+        let pModify = 1.0;
+        if (pRate === 'VERY_EASY') pModify = 1.2;
+        else if (pRate === 'EASY') pModify = 1.1;
+        else if (pRate === 'HARD') pModify = 0.9;
+        else if (pRate === 'VERY_HARD') pModify = 0.8;
+        xpGained *= pModify;
+        
+        // Apply star upgrade for XP (+5% per rank of xpBoost skill)
+        const xpBoostRank = (state.skills.xpBoost && state.skills.xpBoost.rank) || 0;
+        xpGained *= (1 + xpBoostRank * 0.05);
+        
+        // Round to nearest integer, guarantee at least 50 XP
+        xpGained = Math.max(50, Math.round(xpGained));
         
         p.xp += xpGained;
         let levelsGained = 0;
@@ -770,7 +912,7 @@ async function handleCombatWin(earnedStars) {
         while (p.xp >= p.maxXP) {
             p.xp -= p.maxXP;
             p.level++;
-            p.maxXP = p.level * 100;
+            p.maxXP = 1000;
             levelsGained++;
             
             if (p.level % 3 === 0) {
@@ -779,6 +921,14 @@ async function handleCombatWin(earnedStars) {
                 gainedSkillPointGlobal = true;
             }
         }
+        
+        xpDetails.push({
+            name: p.name,
+            xp: xpGained,
+            leveledUp: levelsGained > 0,
+            oldLevel: oldLevel,
+            newLevel: p.level
+        });
         
         if (levelsGained > 0) {
             const newLevel = p.level;
@@ -800,7 +950,8 @@ async function handleCombatWin(earnedStars) {
                 level: newLevel,
                 oldStats,
                 newStats,
-                gainedSkillPoint
+                gainedSkillPoint,
+                minionRef: origMinion
             });
         }
         
@@ -835,41 +986,59 @@ async function handleCombatWin(earnedStars) {
             nextRoom++;
         }
     }
+
+    // Populate the combat-win-popup instead of immediately exiting
+    const winPopup = document.getElementById('combat-win-popup');
+    const starsContainer = document.getElementById('combat-win-stars');
+    const xpContainer = document.getElementById('combat-win-xp');
     
-    processLevelUpQueue(() => {
-        finishCombatWin(progressed, nextFloor, nextRoom, xpGained);
+    // Build star display
+    starsContainer.innerHTML = '';
+    for (let i = 0; i < 3; i++) {
+        const star = document.createElement('span');
+        star.textContent = i < earnedStars ? '★' : '☆';
+        star.style.color = i < earnedStars ? 'gold' : '#444';
+        starsContainer.appendChild(star);
+    }
+    
+    // Build XP details listing
+    xpContainer.innerHTML = '';
+    xpDetails.forEach(detail => {
+        const row = document.createElement('div');
+        row.style.margin = '5px 0';
+        row.style.borderBottom = '1px solid rgba(255, 255, 255, 0.1)';
+        row.style.paddingBottom = '3px';
+        
+        let levelUpText = '';
+        if (detail.leveledUp) {
+            levelUpText = ` <span style="color: #2ecc71; font-weight: bold;">(LEVEL UP! ${detail.oldLevel} → ${detail.newLevel})</span>`;
+        }
+        
+        row.innerHTML = `<span style="color: gold; font-weight: bold;">${detail.name}</span>: +${detail.xp} XP${levelUpText}`;
+        xpContainer.appendChild(row);
+    });
+    
+    // Show win popup
+    winPopup.classList.remove('hidden');
+    
+    // Wire up Proceed button
+    const proceedBtn = document.getElementById('combat-win-proceed-btn');
+    const newProceedBtn = proceedBtn.cloneNode(true);
+    proceedBtn.parentNode.replaceChild(newProceedBtn, proceedBtn);
+    
+    newProceedBtn.addEventListener('click', () => {
+        winPopup.classList.add('hidden');
+        
+        // Execute level up screens, then transition back to map
+        processLevelUpQueue(() => {
+            finishCombatWin(progressed, nextFloor, nextRoom, baseXP);
+        });
     });
 }
 
 function processLevelUpQueue(onComplete) {
     if (levelUpQueue.length === 0) {
-        if (gainedSkillPointGlobal) {
-            const candidate = state.army.find(m => m.skillPoints > 0);
-            if (candidate) {
-                currentActiveMinion = candidate;
-                updateSpecializationModalUI();
-                const modal = document.getElementById('specialization-modal');
-                modal.classList.remove('hidden');
-                
-                // Add a temporary close button or behavior if needed, but the modal already has a close button usually
-                const closeBtn = document.getElementById('spec-btn-close-x');
-                if (closeBtn) {
-                    const newCloseBtn = closeBtn.cloneNode(true);
-                    closeBtn.parentNode.replaceChild(newCloseBtn, closeBtn);
-                    newCloseBtn.addEventListener('click', () => {
-                        modal.classList.add('hidden');
-                        onComplete();
-                    });
-                } else {
-                    // Fallback if no close button
-                    setTimeout(() => { onComplete(); }, 100);
-                }
-            } else {
-                onComplete();
-            }
-        } else {
-            onComplete();
-        }
+        onComplete();
         return;
     }
     
@@ -924,7 +1093,22 @@ function processLevelUpQueue(onComplete) {
         
         setTimeout(() => {
             popup.classList.add('hidden');
-            processLevelUpQueue(onComplete);
+            
+            // If this specific minion has skill points, immediately open Specialization for it!
+            if (lu.minionRef && lu.minionRef.skillPoints > 0) {
+                currentActiveMinion = lu.minionRef;
+                updateSpecializationModalUI();
+                const modal = document.getElementById('specialization-modal');
+                modal.classList.remove('hidden');
+                
+                onSpecializationModalClose = () => {
+                    // Once closed, recursively check the next minion in the level-up queue
+                    processLevelUpQueue(onComplete);
+                };
+            } else {
+                // Otherwise, move to the next minion immediately
+                processLevelUpQueue(onComplete);
+            }
         }, 200);
     });
 }
@@ -1108,6 +1292,11 @@ mdBtnSkilltree.addEventListener('click', () => {
 
 specBtnCloseX.addEventListener('click', () => {
     specializationModal.classList.add('hidden');
+    if (onSpecializationModalClose) {
+        const callback = onSpecializationModalClose;
+        onSpecializationModalClose = null;
+        callback();
+    }
 });
 
 specBtnReturn.addEventListener('click', () => {
@@ -1148,7 +1337,6 @@ function openDashboardFromSpec(tabName) {
             
             recalculateMinionStats(currentActiveMinion).then(() => {
                 saveGame();
-                alert(`Unlocked ${tabName} specialization! Spent 1 point on starter skill.`);
                 proceedToDashboard();
             });
             return;

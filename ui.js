@@ -336,7 +336,7 @@ function renderCombatUI() {
 
             const hpPercent = (player.currentHealth / player.maxHealth) * 100;
             if (player.xp === undefined) player.xp = 0;
-            if (player.maxXP === undefined) player.maxXP = player.level * 100;
+            player.maxXP = 1000;
             const xpPercent = (player.xp / player.maxXP) * 100;
 
             const hasSprite = slot.querySelector('.floating-ui');
@@ -430,7 +430,7 @@ function createMinionSpriteHTML(minion, index, side) {
     const hpPercent = (minion.currentHealth / minion.maxHealth) * 100;
     
     if (minion.xp === undefined) minion.xp = 0;
-    if (minion.maxXP === undefined) minion.maxXP = minion.level * 100;
+    minion.maxXP = 1000;
     
     let xpBarHTML = '';
     if (side === 'player') {
