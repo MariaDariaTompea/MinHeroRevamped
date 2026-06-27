@@ -172,15 +172,19 @@ function updateCollectionUI() {
     // Current Team Row
     colCurrentTeam.innerHTML = '';
     state.army.forEach(minion => {
-        colCurrentTeam.innerHTML += `<div class="small-sprite">${minion.name.substring(0, 2)}</div>`;
+        colCurrentTeam.innerHTML += `<div class="small-sprite" style="border: 2px solid gold; border-radius: 4px; padding: 2px; margin: 2px; background: rgba(255, 215, 0, 0.1);">${minion.name.substring(0, 2)}</div>`;
     });
     
     // Grid
     colGrid.innerHTML = '';
     state.collection.forEach((minion, i) => {
+        const activeClass = minion.inTeam ? 'active-team-cell' : '';
+        const activeIndicator = minion.inTeam ? '<div style="position:absolute; top:-5px; right:-5px; background:gold; color:black; font-size:9px; font-weight:bold; border-radius:50%; width:15px; height:15px; display:flex; align-items:center; justify-content:center; border:1px solid black; z-index:10;">✔</div>' : '';
+        
         colGrid.innerHTML += `
-            <div class="grid-cell" onclick="selectCollectionMinion(${i})">
+            <div class="grid-cell ${activeClass}" onclick="selectCollectionMinion(${i})" style="position: relative; border: ${minion.inTeam ? '2px solid gold' : '1px solid #444'}; box-shadow: ${minion.inTeam ? '0 0 8px rgba(255, 215, 0, 0.4)' : 'none'};">
                 <div class="small-sprite">${minion.name.substring(0, 2)}</div>
+                ${activeIndicator}
             </div>
         `;
     });
@@ -195,9 +199,13 @@ function updateCollectionUI() {
     }
 }
 
+window.selectedCollectionIndex = 0;
+
 window.selectCollectionMinion = function(index) {
     const minion = state.collection[index];
     if(!minion) return;
+    
+    window.selectedCollectionIndex = index;
     
     detailSprite.textContent = minion.name.substring(0, 2);
     detailName.textContent = minion.name;
@@ -209,6 +217,20 @@ window.selectCollectionMinion = function(index) {
     valAttack.textContent = minion.attack || '--';
     valHealing.textContent = minion.healing || '--';
     valSpeed.textContent = minion.speed || '--';
+    
+    // Update Toggle Team button
+    const toggleBtn = document.getElementById('btn-col-toggle-team');
+    if (toggleBtn) {
+        if (minion.inTeam) {
+            toggleBtn.textContent = 'REMOVE FROM TEAM';
+            toggleBtn.style.background = '#c0392b';
+            toggleBtn.style.color = 'white';
+        } else {
+            toggleBtn.textContent = 'ADD TO TEAM';
+            toggleBtn.style.background = 'gold';
+            toggleBtn.style.color = 'black';
+        }
+    }
 };
 
 // Update Hero/Stats Page
@@ -675,3 +697,63 @@ function getSkillIconPath(icon) {
     }
     return `assets/skills/${icon}.png`;
 }
+
+// Wire up Toggle Team and Release buttons in the Collection Screen details panel
+document.getElementById('btn-col-toggle-team').addEventListener('click', () => {
+    const minion = state.collection[window.selectedCollectionIndex];
+    if (!minion) return;
+    
+    if (minion.inTeam) {
+        // Remove from team
+        const activeTeam = state.collection.filter(m => m.inTeam);
+        if (activeTeam.length <= 1) {
+            alert("You must keep at least 1 minion in your active team!");
+            return;
+        }
+        minion.inTeam = false;
+        window.syncArmyAndCollection();
+        saveGame();
+        updateCollectionUI();
+        selectCollectionMinion(window.selectedCollectionIndex);
+    } else {
+        // Add to team
+        const activeTeam = state.collection.filter(m => m.inTeam);
+        if (activeTeam.length < 5) {
+            minion.inTeam = true;
+            window.syncArmyAndCollection();
+            saveGame();
+            updateCollectionUI();
+            selectCollectionMinion(window.selectedCollectionIndex);
+        } else {
+            // Team is full! Trigger Swap Modal!
+            window.showSwapModal(minion, () => {
+                updateCollectionUI();
+                selectCollectionMinion(window.selectedCollectionIndex);
+            });
+        }
+    }
+});
+
+document.getElementById('btn-release').addEventListener('click', () => {
+    const minion = state.collection[window.selectedCollectionIndex];
+    if (!minion) return;
+    
+    if (minion.inTeam) {
+        const activeTeam = state.collection.filter(m => m.inTeam);
+        if (activeTeam.length <= 1) {
+            alert("You cannot release your only active team member!");
+            return;
+        }
+    }
+    
+    const confirmRelease = confirm(`Are you sure you want to release ${minion.name}? This action cannot be undone.`);
+    if (confirmRelease) {
+        state.collection.splice(window.selectedCollectionIndex, 1);
+        window.syncArmyAndCollection();
+        saveGame();
+        
+        // Select another minion
+        window.selectedCollectionIndex = 0;
+        updateCollectionUI();
+    }
+});

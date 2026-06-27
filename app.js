@@ -46,6 +46,7 @@ slots.forEach(slot => {
                     dodgeChance: { rank: 0, cost: 20, name: 'Evade', icon: '🥾' }
                 };
             }
+            syncArmyAndCollection();
             startTransitionToGame();
         } else {
             // New Game
@@ -135,11 +136,11 @@ btnStartAdventure.addEventListener('click', () => {
     
     // Starting Minions: 3 Level 1 Tigriers (as requested!)
     state.collection = [
-        { name: 'Tigrier', level: 1, xp: 0, skillPoints: 0 },
-        { name: 'Tigrier', level: 1, xp: 0, skillPoints: 0 },
-        { name: 'Tigrier', level: 1, xp: 0, skillPoints: 0 }
+        { name: 'Tigrier', level: 1, xp: 0, skillPoints: 0, inTeam: true },
+        { name: 'Tigrier', level: 1, xp: 0, skillPoints: 0, inTeam: true },
+        { name: 'Tigrier', level: 1, xp: 0, skillPoints: 0, inTeam: true }
     ];
-    state.army = [...state.collection];
+    state.army = state.collection.filter(m => m.inTeam);
     state.unlockedFloor = 1;
     state.unlockedRoom = 1;
     state.stars = 0;
@@ -177,6 +178,106 @@ function startTransitionToGame() {
     }, 1000);
 }
 
+function syncArmyAndCollection() {
+    if (!state.collection) state.collection = [];
+    
+    // 1. Rebuild/ensure inTeam flag is set for active minions (backward compatibility)
+    const hasAnyInTeam = state.collection.some(m => m.inTeam === true);
+    if (!hasAnyInTeam) {
+        state.collection.forEach((m, idx) => {
+            if (idx < (state.army ? state.army.length : 3)) {
+                m.inTeam = true;
+            } else {
+                m.inTeam = false;
+            }
+        });
+    }
+    
+    // 2. Sync army references to the exact objects in collection
+    state.army = state.collection.filter(m => m.inTeam);
+}
+window.syncArmyAndCollection = syncArmyAndCollection;
+
+function showSwapModal(incomingMinion, onComplete) {
+    const modal = document.getElementById('swap-modal');
+    const title = document.getElementById('swap-modal-title');
+    const msg = document.getElementById('swap-modal-msg');
+    const list = document.getElementById('swap-list');
+    const cancelBtn = document.getElementById('btn-swap-cancel');
+    
+    // incomingMinion might not be in collection yet (for hatching, we push it first). 
+    // If it is already in team (which shouldn't be the case when opening this modal), we handle title
+    const isManualSwap = incomingMinion.inTeam;
+    
+    title.textContent = isManualSwap ? "Swap Team Member" : "Egg Hatched!";
+    if (isManualSwap) {
+        msg.textContent = `Select an active team member to replace with ${incomingMinion.name}:`;
+        cancelBtn.textContent = "Cancel";
+    } else {
+        msg.textContent = `Your team is full! Do you want to swap one of your active team members with the newly hatched ${incomingMinion.name}?`;
+        cancelBtn.textContent = "Send to Storage";
+    }
+    
+    list.innerHTML = '';
+    
+    state.army.forEach((member) => {
+        const row = document.createElement('div');
+        row.style.background = 'rgba(255,255,255,0.08)';
+        row.style.border = '1px solid #555';
+        row.style.borderRadius = '5px';
+        row.style.padding = '8px 12px';
+        row.style.display = 'flex';
+        row.style.alignItems = 'center';
+        row.style.justifyContent = 'space-between';
+        row.style.cursor = 'pointer';
+        row.style.transition = 'background 0.2s';
+        
+        row.onmouseover = () => row.style.background = 'rgba(255,255,255,0.15)';
+        row.onmouseout = () => row.style.background = 'rgba(255,255,255,0.08)';
+        
+        row.innerHTML = `
+            <div style="display:flex; align-items:center; gap: 10px;">
+                <div class="sprite-placeholder small" style="width:30px; height:30px; line-height:30px; border-radius:30px; background: #333; text-align: center; color: white;">${member.name.substring(0, 2)}</div>
+                <div style="text-align:left;">
+                    <div style="font-weight:bold; color:gold;">${member.name}</div>
+                    <div style="font-size:12px; color:#aaa;">Level ${member.level}</div>
+                </div>
+            </div>
+            <div style="font-weight:bold; color:#f1c40f;">REPLACE ➔</div>
+        `;
+        
+        row.addEventListener('click', () => {
+            // Replaced minion inTeam = false
+            member.inTeam = false;
+            // Incoming minion inTeam = true
+            incomingMinion.inTeam = true;
+            
+            syncArmyAndCollection();
+            saveGame();
+            
+            modal.classList.add('hidden');
+            alert(`Successfully swapped ${member.name} out. ${incomingMinion.name} is now in your active team!`);
+            if (onComplete) onComplete();
+        });
+        
+        list.appendChild(row);
+    });
+    
+    modal.classList.remove('hidden');
+    
+    const newCancelBtn = cancelBtn.cloneNode(true);
+    cancelBtn.parentNode.replaceChild(newCancelBtn, cancelBtn);
+    
+    newCancelBtn.addEventListener('click', () => {
+        modal.classList.add('hidden');
+        if (!isManualSwap) {
+            alert(`${incomingMinion.name} has been sent to your collection storage.`);
+        }
+        if (onComplete) onComplete();
+    });
+}
+window.showSwapModal = showSwapModal;
+
 // --- Egg Hatching Logic ---
 eggs.forEach(egg => {
     egg.addEventListener('click', () => {
@@ -184,19 +285,37 @@ eggs.forEach(egg => {
         
         setTimeout(() => {
             const randomMinion = availableMinions[Math.floor(Math.random() * availableMinions.length)];
-            alert(`You hatched a ${randomMinion}! It has been sent to your collection.`);
             
-            state.collection.push({
+            const newMinion = {
                 name: randomMinion,
                 level: 1,
                 xp: 0,
-                skillPoints: 0
-            });
-            saveGame();
+                skillPoints: 0,
+                inTeam: false
+            };
             
-            eggs.forEach(e => e.textContent = '🥚');
-            buildTower();
-            showScreen(screenMain);
+            // Check active team size
+            if (state.army.length < 5) {
+                newMinion.inTeam = true;
+                state.collection.push(newMinion);
+                syncArmyAndCollection();
+                saveGame();
+                alert(`You hatched a ${randomMinion}! Since your team had space, it has been added directly to your active team.`);
+                
+                eggs.forEach(e => e.textContent = '🥚');
+                buildTower();
+                showScreen(screenMain);
+            } else {
+                // Team is full: add to collection but keep out of team, let user choose to swap
+                state.collection.push(newMinion);
+                saveGame();
+                
+                showSwapModal(newMinion, () => {
+                    eggs.forEach(e => e.textContent = '🥚');
+                    buildTower();
+                    showScreen(screenMain);
+                });
+            }
         }, 500);
     });
 });
@@ -966,9 +1085,6 @@ async function handleCombatWin(earnedStars) {
         if (p.healing) origMinion.healing = p.healing;
         if (p.speed) origMinion.speed = p.speed;
     }
-    
-    // Sync state.collection and state.army
-    state.collection = [...state.army];
     
     state.stars += earnedStars;
     state.money += earnedMoney;
