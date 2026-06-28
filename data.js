@@ -290,7 +290,110 @@ const elementalMatchups = {
     'STONE': { strong: ['ICE'], weak: [] }
 };
 
-const availableMinions = ['Tigrier'];
+const availableMinions = ['Tigrier', 'Virid'];
+
+// visual map database for levels (Floor_Room keys)
+const LEVEL_MAPS = {
+    // Default Map for Level 1-1
+    "1_1": {
+        "width": 50,
+        "height": 30,
+        "spawn": {
+            "x": 12,
+            "y": 4
+        },
+        "grid": [
+            ["floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray"],
+            ["floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray"],
+            ["floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray"],
+            ["floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray"],
+            ["floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","spawn","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray"],
+            ["floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","teleport_head","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","npc1","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray"],
+            ["floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray"],
+            ["floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray"],
+            ["floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","wall","wall","wall","wall","wall","wall","wall","wall","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray"],
+            ["floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray"],
+            ["floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray"],
+            ["floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","teleport_tail","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray"],
+            ["floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","door_master","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray"],
+            ["floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","boss","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray"],
+            ["floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray"],
+            ["floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray"],
+            ["floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","teleport_tail","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","wall","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray"],
+            ["floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","wall","floor_gray","floor_gray","floor_gray","npc1","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray"],
+            ["floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","wall","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray"],
+            ["floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","wall","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray"],
+            ["floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","wall","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray"],
+            ["floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","teleport_head","floor_gray","floor_gray","floor_gray","wall","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray"],
+            ["floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","wall","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray"],
+            ["floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","wall","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray"],
+            ["floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","npc2","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","wall","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray"],
+            ["floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","wall","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray"],
+            ["floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray"],
+            ["floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray"],
+            ["floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray"],
+            ["floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray","floor_gray"]
+        ],
+        "npcs": [
+            {
+                "id": "npc1",
+                "x": 27,
+                "y": 5,
+                "dialogue": "Hello, adventurer! I am the Student A. Prepare to battle!"
+            },
+            {
+                "id": "boss",
+                "x": 19,
+                "y": 13,
+                "dialogue": "Hello, adventurer! I am the Boss. Prepare to battle!"
+            },
+            {
+                "id": "npc1",
+                "x": 31,
+                "y": 17,
+                "dialogue": "Hello, adventurer! I am the Student A. Prepare to battle!"
+            },
+            {
+                "id": "npc2",
+                "x": 15,
+                "y": 24,
+                "dialogue": "Hello, adventurer! I am the Student B. Prepare to battle!"
+            }
+        ],
+        "doors": [
+            {
+                "x": 33,
+                "y": 12,
+                "width": 2,
+                "height": 1,
+                "open": false
+            }
+        ],
+        "eggs": [],
+        "teleports": [
+            {
+                "head": {
+                    "x": 16,
+                    "y": 5
+                },
+                "tail": {
+                    "x": 26,
+                    "y": 11
+                }
+            },
+            {
+                "head": {
+                    "x": 23,
+                    "y": 21
+                },
+                "tail": {
+                    "x": 14,
+                    "y": 16
+                }
+            }
+        ]
+    }
+};
 
 const state = {
     collection: [
@@ -318,7 +421,15 @@ const state = {
         coinBoost: { rank: 0, cost: 15, name: 'Coin Magnet', icon: '💰' },
         critChance: { rank: 0, cost: 20, name: 'Critical Hit', icon: '🦷' },
         dodgeChance: { rank: 0, cost: 20, name: 'Evade', icon: '🥾' }
-    }
+    },
+    // New exploration state variables
+    exploreActive: false,
+    explorePlayerPos: { x: 0, y: 0 },
+    exploreMap: null,
+    exploreKeysCollected: 0,
+    exploreKeysRequired: 3,
+    exploreDefeatedNPCs: [], // list of unique NPC positions e.g., "x_y"
+    exploreHatchedEggs: [] // list of egg coordinates e.g., "x_y"
 };
 
 let combatState = {

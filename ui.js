@@ -4,6 +4,15 @@ const screenMain = document.getElementById('screen-main');
 const screenCollection = document.getElementById('screen-collection');
 const screenCombat = document.getElementById('screen-combat');
 const screenEgg = document.getElementById('screen-egg');
+const screenExplore = document.getElementById('screen-explore');
+const exploreTitle = document.getElementById('explore-title');
+const exploreKeysCount = document.getElementById('explore-keys-count');
+const exploreMapGrid = document.getElementById('explore-map-grid');
+const exploreDialogueOverlay = document.getElementById('explore-dialogue-overlay');
+const dialogueSpeaker = document.getElementById('dialogue-speaker');
+const dialogueText = document.getElementById('dialogue-text');
+const exploreVignette = document.getElementById('explore-vignette');
+const btnExploreLeave = document.getElementById('btn-explore-leave');
 
 const topMenu = document.getElementById('top-menu');
 const btnMenu = document.getElementById('btn-menu');
@@ -143,6 +152,166 @@ function buildTower() {
         }
     }, 50);
 }
+
+// Exploration Helper: Get multi-tile info at cell coordinates
+function getMultiTileInfo(x, y) {
+    if (!state.exploreActive || !state.exploreMap) return null;
+    
+    // Check doors
+    if (state.exploreMap.doors) {
+        for (let door of state.exploreMap.doors) {
+            if (x >= door.x && x < door.x + door.width && y >= door.y && y < door.y + door.height) {
+                return { type: 'door_master', data: door };
+            }
+        }
+    }
+    
+    // Check eggs
+    if (state.exploreMap.eggs) {
+        for (let egg of state.exploreMap.eggs) {
+            if (x >= egg.x && x < egg.x + egg.width && y >= egg.y && y < egg.y + egg.height) {
+                return { type: 'egg', data: egg };
+            }
+        }
+    }
+    
+    // Check teleports
+    if (state.exploreMap.teleports) {
+        for (let tp of state.exploreMap.teleports) {
+            if (tp.head.x === x && tp.head.y === y) {
+                return { type: 'teleport_head', data: tp };
+            }
+            if (tp.tail.x === x && tp.tail.y === y) {
+                return { type: 'teleport_tail', data: tp };
+            }
+        }
+    }
+
+    // Check NPCs
+    if (state.exploreMap.npcs) {
+        for (let npc of state.exploreMap.npcs) {
+            if (npc.x === x && npc.y === y) {
+                return { type: 'npc', data: npc };
+            }
+        }
+    }
+    
+    return null;
+}
+
+// Render the visual tilemap grid
+function renderExploreMap() {
+    if (!state.exploreActive || !state.exploreMap) return;
+    
+    // Dynamically calculate optimal cell size to fit the viewport
+    const viewport = document.getElementById('explore-viewport');
+    let cellSize = 40; // Default
+    if (viewport) {
+        const viewportWidth = viewport.clientWidth - 40; // Subtract padding
+        const viewportHeight = viewport.clientHeight - 40;
+        
+        // Calculate size needed to fit
+        const cellW = Math.floor(viewportWidth / state.exploreMap.width);
+        const cellH = Math.floor(viewportHeight / state.exploreMap.height);
+        cellSize = Math.min(cellW, cellH);
+        
+        // Limit bounds between 12px (min readable) and 45px (max standard)
+        cellSize = Math.max(12, Math.min(45, cellSize));
+    }
+    
+    exploreMapGrid.innerHTML = '';
+    exploreMapGrid.style.gridTemplateColumns = `repeat(${state.exploreMap.width}, ${cellSize}px)`;
+    exploreMapGrid.style.gridTemplateRows = `repeat(${state.exploreMap.height}, ${cellSize}px)`;
+    
+    // Update key counter display
+    exploreKeysCount.textContent = `🔑 ${state.exploreKeysCollected}/${state.exploreKeysRequired}`;
+    
+    for (let y = 0; y < state.exploreMap.height; y++) {
+        for (let x = 0; x < state.exploreMap.width; x++) {
+            const cell = document.createElement('div');
+            cell.className = 'explore-cell';
+            
+            // Set dynamic size and font scaling for emojis
+            cell.style.width = `${cellSize}px`;
+            cell.style.height = `${cellSize}px`;
+            cell.style.fontSize = `${Math.floor(cellSize * 0.55)}px`;
+            
+            // Default background tile class from grid definition
+            const baseType = state.exploreMap.grid[y][x] || 'floor_gray';
+            if (baseType === 'wall') {
+                cell.classList.add('tile-wall');
+                cell.textContent = '🧱';
+            } else if (baseType === 'floor_carpet') {
+                cell.classList.add('tile-floor-carpet');
+            } else {
+                cell.classList.add('tile-floor-gray');
+            }
+            
+            // Check if there is a multi-tile block or entity
+            const info = getMultiTileInfo(x, y);
+            if (info) {
+                if (info.type === 'door_master') {
+                    if (info.data.open) {
+                        cell.classList.remove('tile-wall');
+                        cell.className = 'explore-cell tile-door-master-open';
+                        cell.textContent = '';
+                    } else {
+                        cell.className = 'explore-cell tile-door-master-closed';
+                        // Put padlock on the first cell of the 2x1 door
+                        if (x === info.data.x && y === info.data.y) {
+                            cell.textContent = '🔒';
+                        } else {
+                            cell.textContent = '🚧';
+                        }
+                    }
+                } else if (info.type === 'egg') {
+                    cell.className = 'explore-cell tile-egg-chamber';
+                    const coordKey = `${x}_${y}`;
+                    if (state.exploreHatchedEggs.includes(coordKey)) {
+                        cell.textContent = '💥';
+                    } else {
+                        cell.textContent = '🥚';
+                    }
+                } else if (info.type === 'teleport_head') {
+                    cell.classList.add('tile-teleport-head');
+                    cell.style.backgroundColor = '#2980b9';
+                    cell.textContent = '🌀';
+                } else if (info.type === 'teleport_tail') {
+                    cell.classList.add('tile-teleport-tail');
+                    cell.style.backgroundColor = '#8e44ad';
+                    cell.textContent = '🌀';
+                } else if (info.type === 'npc') {
+                    const coordKey = `${x}_${y}`;
+                    if (!state.exploreDefeatedNPCs.includes(coordKey)) {
+                        if (info.data.id === 'boss') {
+                            cell.textContent = '👹';
+                        } else {
+                            cell.textContent = info.data.id === 'npc1' ? '🧙' : '🧑';
+                        }
+                    }
+                }
+                
+                // Re-apply inline styling overrides to maintain scale consistency
+                cell.style.width = `${cellSize}px`;
+                cell.style.height = `${cellSize}px`;
+                cell.style.fontSize = `${Math.floor(cellSize * 0.55)}px`;
+            }
+            
+            // Render Player on top
+            if (state.explorePlayerPos.x === x && state.explorePlayerPos.y === y) {
+                const playerDiv = document.createElement('div');
+                playerDiv.className = 'player-avatar-explore';
+                playerDiv.style.fontSize = `${Math.floor(cellSize * 0.65)}px`;
+                playerDiv.textContent = state.heroGender === 'boy' ? '👱‍♂️' : '👱‍♀️';
+                cell.appendChild(playerDiv);
+            }
+            
+            exploreMapGrid.appendChild(cell);
+        }
+    }
+}
+window.renderExploreMap = renderExploreMap;
+window.getMultiTileInfo = getMultiTileInfo;
 
 // Update Team Overlay
 function updateTeamOverlayUI() {

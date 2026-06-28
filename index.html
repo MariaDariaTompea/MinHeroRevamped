@@ -576,6 +576,37 @@
             </div>
         </div>
 
+        <!-- Exploration / Walkable Map Screen -->
+        <div id="screen-explore" class="screen hidden" style="position: absolute; width: 100%; height: 100%; top: 0; left: 0; background-color: #12141c; display: flex; flex-direction: column; overflow: hidden; z-index: 100;">
+            <!-- Top bar -->
+            <div id="explore-top-bar" style="display: flex; justify-content: space-between; align-items: center; background: #2c3e50; border-bottom: 3px solid #7f8c8d; padding: 10px 20px; z-index: 105;">
+                <div class="explore-level-name medieval" id="explore-title" style="color: #f1c40f; font-size: 24px; text-shadow: 2px 2px 2px #000;">Tower Exploration</div>
+                <div style="display: flex; align-items: center; gap: 20px;">
+                    <div id="explore-keys-display" style="font-family: 'MedievalSharp', cursive; font-size: 20px; color: #fff; text-shadow: 1px 1px 2px #000; display: flex; align-items: center; gap: 5px;">
+                        Keys: <span id="explore-keys-count" style="color: #f1c40f; font-weight: bold;">🔑 0/3</span>
+                    </div>
+                    <button id="btn-explore-leave" style="background: #e74c3c; color: white; border: 2px solid white; border-radius: 5px; font-family: 'MedievalSharp', cursive; font-size: 16px; padding: 5px 12px; cursor: pointer; text-shadow: 1px 1px 1px #000;">LEAVE</button>
+                </div>
+            </div>
+
+            <!-- Viewport for the walkable map -->
+            <div id="explore-viewport" style="flex: 1; display: flex; align-items: center; justify-content: center; overflow: auto; position: relative; padding: 20px;">
+                <div id="explore-map-grid" style="display: grid; border: 4px solid #34495e; background: #1a1c23; box-shadow: 0 10px 30px rgba(0,0,0,0.8); position: relative; user-select: none;">
+                    <!-- Cells injected by JS -->
+                </div>
+            </div>
+
+            <!-- Dialogue overlay at the bottom -->
+            <div id="explore-dialogue-overlay" class="hidden" style="position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%); width: 90%; max-width: 800px; background: rgba(20, 24, 35, 0.95); border: 4px solid #7f8c8d; border-radius: 10px; padding: 15px 20px; z-index: 110; box-shadow: 0 5px 20px rgba(0,0,0,0.9); box-sizing: border-box;">
+                <div class="dialogue-speaker medieval" id="dialogue-speaker" style="color: #f1c40f; font-size: 22px; margin-bottom: 5px; text-shadow: 1px 1px 2px #000;">Speaker</div>
+                <div class="dialogue-text" id="dialogue-text" style="color: #fff; font-size: 18px; line-height: 1.4; margin-bottom: 10px; font-family: sans-serif;">Dialogue goes here...</div>
+                <div class="dialogue-prompt" style="color: #7f8c8d; font-size: 12px; text-align: right; text-transform: uppercase; letter-spacing: 1px; font-weight: bold; animation: pulse 1.5s infinite;">Press SPACE to continue</div>
+            </div>
+
+            <!-- Vignette effect overlay for room transitions -->
+            <div id="explore-vignette" class="hidden" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 120; transition: box-shadow 0.6s ease-in-out; box-shadow: inset 0 0 100px rgba(0,0,0,0.9);"></div>
+        </div>
+
     </div>
     
     <script src="data.js"></script>

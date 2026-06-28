@@ -466,6 +466,13 @@ async function fetchAbilityDetails(abilityName) {
 
 // --- Combat Flow Logic ---
 async function startLevelCombat(floor, room, isBoss) {
+    // Intercept: If stage has visual map, switch to explore screen instead (unless in combat trigger)
+    const mapKey = `${floor}_${room}`;
+    if (LEVEL_MAPS[mapKey] && !state.exploreInCombat) {
+        startExploration(floor, room);
+        return;
+    }
+
     combatState.currentFloor = floor;
     combatState.currentRoom = room;
     combatState.isBoss = isBoss;
@@ -924,7 +931,15 @@ function checkWinCondition() {
             void fadeOverlay.offsetWidth;
             fadeOverlay.classList.add('blackout');
             setTimeout(() => {
-                showScreen(screenMain);
+                if (state.exploreActive) {
+                    state.exploreInCombat = false;
+                    // Reset position to spawn point
+                    state.explorePlayerPos = { ...state.exploreMap.spawn };
+                    showScreen(screenExplore);
+                    renderExploreMap();
+                } else {
+                    showScreen(screenMain);
+                }
                 buildTower();
                 fadeOverlay.classList.remove('blackout');
                 setTimeout(() => { fadeOverlay.classList.add('hidden'); }, 500);
@@ -1235,6 +1250,45 @@ function finishCombatWin(progressed, nextFloor, nextRoom, xpGained) {
     fadeOverlay.classList.add('blackout');
     
     setTimeout(() => {
+        // If we won combat triggered inside explore mode, return to explore screen!
+        if (state.exploreActive && state.exploreInCombat) {
+            state.exploreInCombat = false;
+            
+            // Mark active NPC defeated
+            const coordKey = `${state.exploreActiveNPC.x}_${state.exploreActiveNPC.y}`;
+            if (!state.exploreDefeatedNPCs.includes(coordKey)) {
+                state.exploreDefeatedNPCs.push(coordKey);
+                
+                // If it was a student, increment key count
+                if (state.exploreActiveNPC.id !== 'boss') {
+                    state.exploreKeysCollected++;
+                }
+            }
+            
+            showScreen(screenExplore);
+            renderExploreMap();
+            saveGame();
+            
+            fadeOverlay.classList.remove('blackout');
+            setTimeout(() => { fadeOverlay.classList.add('hidden'); }, 500);
+            
+            // Show follow-up dialogue
+            setTimeout(() => {
+                if (state.exploreActiveNPC.id === 'boss') {
+                    if (!state.exploreMap.eggs || state.exploreMap.eggs.length === 0) {
+                        showDialogue("System", ["You defeated the Temple Master!", "With no eggs remaining in this chamber, you successfully complete the floor!"], () => {
+                            triggerStageCompletion();
+                        });
+                    } else {
+                        showDialogue("System", ["You defeated the Temple Master!", "The Egg Chamber path is now open!"]);
+                    }
+                } else {
+                    showDialogue("System", [`You defeated the Sage Student!`, `You found a Temple Key! (Keys: ${state.exploreKeysCollected}/${state.exploreKeysRequired})`]);
+                }
+            }, 600);
+            return;
+        }
+
         if(combatState.isBoss) {
             showScreen(screenEgg);
         } else {
@@ -1618,3 +1672,335 @@ async function recalculateMinionStats(minion) {
     minion.healing = stats.healing;
     minion.speed = stats.speed;
 }
+
+// ==========================================
+// ====== EXPLORATION MODE ENGINE ======
+// ==========================================
+
+let activeDialogue = null;
+let activeInteractNPC = null;
+
+// Initialize and start visual exploration mode
+function startExploration(floor, room) {
+    const mapKey = `${floor}_${room}`;
+    const mapTemplate = LEVEL_MAPS[mapKey];
+    if (!mapTemplate) return;
+
+    state.exploreActive = true;
+    state.exploreInCombat = false;
+    state.exploreMap = JSON.parse(JSON.stringify(mapTemplate)); // deep clone
+    
+    // Set spawn position
+    if (state.exploreMap.spawn) {
+        state.explorePlayerPos = { ...state.exploreMap.spawn };
+    } else {
+        state.explorePlayerPos = { x: 1, y: 1 };
+    }
+    
+    state.exploreKeysCollected = 0;
+    // Keys required = count of non-boss NPCs on the map
+    const studentNPCs = state.exploreMap.npcs ? state.exploreMap.npcs.filter(n => n.id !== 'boss') : [];
+    state.exploreKeysRequired = studentNPCs.length;
+    state.exploreDefeatedNPCs = [];
+    state.exploreHatchedEggs = [];
+
+    // Switch screen to exploration screen
+    showScreen(screenExplore);
+    exploreTitle.textContent = `Sage's Tower - Level ${floor}-${room}`;
+    renderExploreMap();
+}
+window.startExploration = startExploration;
+
+// Leave stage button listener
+btnExploreLeave.addEventListener('click', () => {
+    state.exploreActive = false;
+    state.exploreMap = null;
+    showScreen(screenMain);
+    buildTower();
+});
+
+// Keyboard event listener for explorer mode
+window.addEventListener('keydown', (e) => {
+    if (!state.exploreActive || state.exploreInCombat) return;
+
+    const keysToPrevent = ['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', ' ', 'w', 'a', 's', 'd', 'W', 'A', 'S', 'D'];
+    if (keysToPrevent.includes(e.key)) {
+        e.preventDefault();
+    }
+
+    // Dialogue active state
+    if (activeDialogue) {
+        if (e.key === ' ' || e.key === 'Spacebar') {
+            advanceDialogue();
+        }
+        return;
+    }
+
+    let dx = 0;
+    let dy = 0;
+
+    if (e.key === 'ArrowUp' || e.key === 'w' || e.key === 'W') {
+        dy = -1;
+    } else if (e.key === 'ArrowDown' || e.key === 's' || e.key === 'S') {
+        dy = 1;
+    } else if (e.key === 'ArrowLeft' || e.key === 'a' || e.key === 'A') {
+        dx = -1;
+    } else if (e.key === 'ArrowRight' || e.key === 'd' || e.key === 'D') {
+        dx = 1;
+    } else if (e.key === ' ' || e.key === 'Spacebar') {
+        handleInteraction();
+        return;
+    }
+
+    if (dx !== 0 || dy !== 0) {
+        movePlayer(dx, dy);
+    }
+});
+
+// Move player cell-by-cell and run walkability and trigger checks
+function movePlayer(dx, dy) {
+    const nextX = state.explorePlayerPos.x + dx;
+    const nextY = state.explorePlayerPos.y + dy;
+
+    // Check bounds
+    if (nextX < 0 || nextX >= state.exploreMap.width || nextY < 0 || nextY >= state.exploreMap.height) {
+        return;
+    }
+
+    // Check grid layout limits
+    const baseType = state.exploreMap.grid[nextY][nextX] || 'floor_gray';
+    if (baseType === 'wall') {
+        return;
+    }
+
+    // Check multi-tile objects and entities
+    const info = getMultiTileInfo(nextX, nextY);
+    if (info) {
+        if (info.type === 'door_master' && !info.data.open) {
+            return; // blocked
+        }
+        if (info.type === 'egg') {
+            return; // blocked (must stand adjacent and press Space)
+        }
+        if (info.type === 'npc') {
+            const coordKey = `${nextX}_${nextY}`;
+            if (!state.exploreDefeatedNPCs.includes(coordKey)) {
+                return; // blocked by undefeated NPC
+            }
+        }
+    }
+
+    // Execute walk
+    state.explorePlayerPos.x = nextX;
+    state.explorePlayerPos.y = nextY;
+    renderExploreMap();
+
+    // Check teleport portal triggers
+    const stepOnInfo = getMultiTileInfo(nextX, nextY);
+    if (stepOnInfo && (stepOnInfo.type === 'teleport_head' || stepOnInfo.type === 'teleport_tail')) {
+        if (!state.exploreJustTeleported) {
+            triggerTeleport(stepOnInfo);
+        }
+    } else {
+        // Stepped off a portal cell, clear cooldown flag
+        state.exploreJustTeleported = false;
+    }
+}
+
+// Spacebar Interaction with 4 adjacent neighbors
+function handleInteraction() {
+    const p = state.explorePlayerPos;
+    const neighbors = [
+        { x: p.x, y: p.y - 1 }, // Up
+        { x: p.x, y: p.y + 1 }, // Down
+        { x: p.x - 1, y: p.y }, // Left
+        { x: p.x + 1, y: p.y }  // Right
+    ];
+
+    for (let neighbor of neighbors) {
+        if (neighbor.x < 0 || neighbor.x >= state.exploreMap.width || neighbor.y < 0 || neighbor.y >= state.exploreMap.height) {
+            continue;
+        }
+
+        const info = getMultiTileInfo(neighbor.x, neighbor.y);
+        if (info) {
+            if (info.type === 'npc') {
+                const coordKey = `${neighbor.x}_${neighbor.y}`;
+                if (!state.exploreDefeatedNPCs.includes(coordKey)) {
+                    activeInteractNPC = info.data;
+                    showDialogue(
+                        info.data.id === 'boss' ? "Temple Boss" : "Sage Student",
+                        [info.data.dialogue, "Prepare for battle!"],
+                        () => {
+                            startExplorationCombat(activeInteractNPC);
+                        }
+                    );
+                    return;
+                }
+            } else if (info.type === 'door_master' && !info.data.open) {
+                if (state.exploreKeysCollected >= state.exploreKeysRequired) {
+                    showDialogue("System", ["You insert the keys into the Master Barrier...", "The door opens! the way is clear!"], () => {
+                        info.data.open = true;
+                        renderExploreMap();
+                    });
+                } else {
+                    showDialogue("Master Door", [
+                        `This door is sealed by a magic barrier.`,
+                        `You need all keys from the Sage's students to open it!`,
+                        `Required: ${state.exploreKeysRequired} keys. You have: ${state.exploreKeysCollected}.`
+                    ]);
+                }
+                return;
+            } else if (info.type === 'egg') {
+                const coordKey = `${neighbor.x}_${neighbor.y}`;
+                if (!state.exploreHatchedEggs.includes(coordKey)) {
+                    hatchExploreEgg(neighbor.x, neighbor.y);
+                } else {
+                    showDialogue("Egg Nest", "This egg has already hatched.");
+                }
+                return;
+            }
+        }
+    }
+}
+
+// Show text dialogue overlay
+function showDialogue(speaker, textLines, onComplete = null) {
+    activeDialogue = {
+        speaker: speaker,
+        lines: typeof textLines === 'string' ? [textLines] : textLines,
+        currentLineIndex: 0,
+        onComplete: onComplete
+    };
+    exploreDialogueOverlay.classList.remove('hidden');
+    dialogueSpeaker.textContent = activeDialogue.speaker;
+    dialogueText.textContent = activeDialogue.lines[0];
+}
+
+// Cycle dialogue text
+function advanceDialogue() {
+    if (!activeDialogue) return;
+
+    activeDialogue.currentLineIndex++;
+    if (activeDialogue.currentLineIndex < activeDialogue.lines.length) {
+        dialogueText.textContent = activeDialogue.lines[activeDialogue.currentLineIndex];
+    } else {
+        const cb = activeDialogue.onComplete;
+        exploreDialogueOverlay.classList.add('hidden');
+        activeDialogue = null;
+        if (cb) cb();
+    }
+}
+
+// Custom explore minion hatching logic
+function hatchExploreEgg(x, y) {
+    const coordKey = `${x}_${y}`;
+    if (state.exploreHatchedEggs.includes(coordKey)) return;
+    
+    state.exploreHatchedEggs.push(coordKey);
+    renderExploreMap();
+    
+    showDialogue("Egg Chamber", ["The egg starts cracking... 💥", "A minion has hatched!"], () => {
+        const randomMinion = availableMinions[Math.floor(Math.random() * availableMinions.length)];
+        const newMinion = {
+            name: randomMinion,
+            level: 1,
+            xp: 0,
+            skillPoints: 0,
+            inTeam: false
+        };
+        
+        const returnCallback = () => {
+            showScreen(screenExplore);
+            renderExploreMap();
+            saveGame();
+            
+            // Once they hatch the egg, complete the level!
+            setTimeout(() => {
+                triggerStageCompletion();
+            }, 800);
+        };
+
+        if (state.army.length < 5) {
+            newMinion.inTeam = true;
+            state.collection.push(newMinion);
+            syncArmyAndCollection();
+            saveGame();
+            alert(`You hatched a ${randomMinion}! Since your team had space, it has been added directly to your active team.`);
+            returnCallback();
+        } else {
+            state.collection.push(newMinion);
+            saveGame();
+            showSwapModal(newMinion, returnCallback);
+        }
+    });
+}
+
+// Start combat inside exploration mode
+function startExplorationCombat(npc) {
+    state.exploreInCombat = true;
+    state.exploreActiveNPC = npc;
+    
+    const isBoss = (npc.id === 'boss');
+    
+    // We trigger startLevelCombat which now knows not to re-intercept since state.exploreInCombat = true
+    startLevelCombat(combatState.currentFloor, combatState.currentRoom, isBoss);
+}
+
+// Teleport the player between head and tail portals
+function triggerTeleport(info) {
+    state.exploreInCombat = true; // Disable controls during teleport
+
+    exploreVignette.classList.remove('hidden');
+    exploreVignette.classList.add('vignette-flash');
+
+    setTimeout(() => {
+        const target = (info.type === 'teleport_head') ? info.data.tail : info.data.head;
+        state.explorePlayerPos = { x: target.x, y: target.y };
+        state.exploreJustTeleported = true;
+        renderExploreMap();
+    }, 400);
+
+    setTimeout(() => {
+        exploreVignette.classList.remove('vignette-flash');
+        exploreVignette.classList.add('hidden');
+        state.exploreInCombat = false;
+    }, 800);
+}
+
+// Complete the stage transition vignette
+function triggerStageCompletion() {
+    state.exploreActive = false;
+    
+    // Play vignette blackout
+    exploreVignette.classList.remove('hidden');
+    exploreVignette.classList.add('vignette-flash');
+    
+    setTimeout(() => {
+        // Complete the stage! Re-use original progression logic
+        let nextFloor = combatState.currentFloor;
+        let nextRoom = combatState.currentRoom;
+        
+        if (combatState.currentRoom === 3) {
+            nextFloor++;
+            nextRoom = 1;
+        } else {
+            nextRoom++;
+        }
+        
+        state.unlockedFloor = nextFloor;
+        state.unlockedRoom = nextRoom;
+        saveGame();
+        
+        // Go back to main tower map
+        showScreen(screenMain);
+        buildTower();
+        
+        // Hide transition overlay
+        exploreVignette.classList.remove('vignette-flash');
+        exploreVignette.classList.add('hidden');
+        
+        alert("Stage Completed! You successfully hatched the Sage's egg and completed this challenge!");
+    }, 800);
+}
+

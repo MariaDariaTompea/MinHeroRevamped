@@ -1,0 +1,1318 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MinHero Revamped - Map Generator & Editor</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&family=MedievalSharp&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-dark: #12141c;
+            --card-bg: rgba(30, 35, 50, 0.6);
+            --border-color: rgba(255, 255, 255, 0.1);
+            --accent-color: #f1c40f;
+            --danger-color: #e74c3c;
+            --success-color: #2ecc71;
+            --text-color: #f3f4f6;
+            --text-muted: #9ca3af;
+            
+            /* Tile Colors */
+            --color-spawn: #8e44ad;
+            --color-floor-gray: #7f8c8d;
+            --color-floor-carpet: #27ae60;
+            --color-wall: #2c3e50;
+            --color-door-master: #d35400;
+            --color-egg: #f39c12;
+            --color-npc1: #9b59b6;
+            --color-npc2: #3498db;
+            --color-boss: #c0392b;
+            --color-teleport-head: #2980b9;
+            --color-teleport-tail: #8e44ad;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-dark);
+            color: var(--text-color);
+            padding: 20px;
+            min-height: 100vh;
+        }
+
+        h1, h2, h3, .medieval {
+            font-family: 'MedievalSharp', cursive;
+            color: var(--accent-color);
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.8);
+        }
+
+        header {
+            margin-bottom: 20px;
+            text-align: center;
+            border-bottom: 2px solid var(--border-color);
+            padding-bottom: 15px;
+        }
+
+        header h1 {
+            font-size: 32px;
+            margin-bottom: 5px;
+        }
+
+        header p {
+            color: var(--text-muted);
+            font-size: 14px;
+        }
+
+        .main-container {
+            display: grid;
+            grid-template-columns: 320px 1fr;
+            gap: 20px;
+            max-width: 1500px;
+            margin: 0 auto;
+        }
+
+        @media (max-width: 1024px) {
+            .main-container {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .panel {
+            background: var(--card-bg);
+            border: 2px solid var(--border-color);
+            border-radius: 12px;
+            padding: 20px;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .panel-title {
+            font-size: 20px;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 8px;
+            margin-bottom: 5px;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
+
+        label {
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        input, select, textarea {
+            background: rgba(0, 0, 0, 0.4);
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            padding: 8px 12px;
+            color: var(--text-color);
+            font-size: 14px;
+            transition: border-color 0.2s;
+        }
+
+        input:focus, select:focus, textarea:focus {
+            outline: none;
+            border-color: var(--accent-color);
+        }
+
+        .palette-container {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 8px;
+            max-height: 350px;
+            overflow-y: auto;
+            padding-right: 5px;
+        }
+
+        .palette-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 8px 12px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.2s;
+            user-select: none;
+        }
+
+        .palette-item:hover {
+            background: rgba(255, 255, 255, 0.1);
+            border-color: rgba(255, 255, 255, 0.2);
+        }
+
+        .palette-item.active {
+            border-color: var(--accent-color);
+            background: rgba(241, 196, 15, 0.15);
+            box-shadow: 0 0 8px rgba(241, 196, 15, 0.2);
+        }
+
+        .palette-color {
+            width: 20px;
+            height: 20px;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+        }
+
+        .palette-details {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .palette-name {
+            font-size: 13px;
+            font-weight: 600;
+        }
+
+        .palette-size {
+            font-size: 10px;
+            color: var(--text-muted);
+        }
+
+        .btn {
+            background: var(--accent-color);
+            color: #000;
+            border: none;
+            border-radius: 6px;
+            padding: 10px 15px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: opacity 0.2s, transform 0.1s;
+            text-align: center;
+        }
+
+        .btn:hover {
+            opacity: 0.9;
+        }
+
+        .btn:active {
+            transform: scale(0.98);
+        }
+
+        .btn-danger {
+            background: var(--danger-color);
+            color: white;
+        }
+
+        .btn-secondary {
+            background: #7f8c8d;
+            color: white;
+        }
+
+        /* Workspace Grid CSS */
+        .workspace {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            background: var(--card-bg);
+            border: 2px solid var(--border-color);
+            border-radius: 12px;
+            padding: 20px;
+            overflow: auto;
+            position: relative;
+            min-height: 500px;
+        }
+
+        .grid-container {
+            display: grid;
+            border: 2px solid #555;
+            background: #1a1c23;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+            user-select: none;
+        }
+
+        .grid-cell {
+            width: 40px;
+            height: 40px;
+            border: 1px solid rgba(255,255,255,0.05);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            cursor: crosshair;
+            position: relative;
+            box-sizing: border-box;
+            transition: background-color 0.1s;
+        }
+
+        .grid-cell:hover {
+            background-color: rgba(255, 255, 255, 0.1) !important;
+        }
+
+        /* Multi-tile footprints styling */
+        .footprint-master-door {
+            background-color: rgba(211, 84, 0, 0.3) !important;
+            border: 1px dashed var(--color-door-master) !important;
+        }
+        .footprint-egg {
+            background-color: rgba(243, 156, 18, 0.3) !important;
+            border: 1px dashed var(--color-egg) !important;
+        }
+
+        /* Highlight classes */
+        .cell-anchor {
+            outline: 2px solid #fff;
+            z-index: 5;
+        }
+
+        .cell-invalid {
+            background-color: rgba(231, 76, 60, 0.5) !important;
+        }
+
+        .npc-dialog-panel {
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 10px;
+            display: none;
+        }
+
+        .npc-dialog-panel.active {
+            display: block;
+        }
+
+        .coords-indicator {
+            position: absolute;
+            bottom: 10px;
+            right: 15px;
+            font-size: 12px;
+            color: var(--text-muted);
+            background: rgba(0,0,0,0.5);
+            padding: 3px 8px;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1>MinHero Tower Map Editor</h1>
+        <p>Visually build your level grids, paint carpets and walls, configure text-dialogue NPCs, and place egg hatching chambers!</p>
+    </header>
+
+    <div class="main-container">
+        
+        <!-- Sidebar Controls Panel -->
+        <div class="panel">
+            <h2 class="panel-title">Editor Controls</h2>
+            
+            <!-- Grid Sizes -->
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="grid-width">Width</label>
+                    <input type="number" id="grid-width" value="12" min="8" max="64">
+                </div>
+                <div class="form-group">
+                    <label for="grid-height">Height</label>
+                    <input type="number" id="grid-height" value="12" min="8" max="64">
+                </div>
+            </div>
+            
+            <!-- Palette Brush -->
+            <div class="form-group">
+                <label>Selected Block / Brush</label>
+                <div class="palette-container" id="brush-palette">
+                    <!-- Palette items injected by JS -->
+                </div>
+            </div>
+
+            <!-- NPC Dialog Panel (conditional display) -->
+            <div class="npc-dialog-panel" id="dialog-config">
+                <h3 class="medieval" style="font-size: 14px; margin-bottom: 5px;" id="dialog-title">NPC Dialogue</h3>
+                <div class="form-group">
+                    <label for="npc-dialog-text">Dialogue Text</label>
+                    <textarea id="npc-dialog-text" rows="3" placeholder="Enter text spoken by NPC..."></textarea>
+                </div>
+            </div>
+
+            <!-- Action buttons -->
+            <button class="btn" id="btn-test" style="background-color: var(--success-color); color: #000; margin-bottom: 5px;">🎮 Play Test (Simulation)</button>
+            <button class="btn" id="btn-export">Export Map JSON</button>
+            <button class="btn btn-secondary" id="btn-import">Import Map JSON</button>
+            <button class="btn btn-danger" id="btn-clear">Reset Grid</button>
+
+            <!-- JSON Input/Output Area -->
+            <div class="form-group">
+                <label for="json-data">Map Code (JSON)</label>
+                <textarea id="json-data" rows="5" style="font-family: monospace; font-size: 11px;" placeholder="Copy exported JSON code from here, or paste JSON here to import."></textarea>
+            </div>
+        </div>
+
+        <!-- Main Grid Workspace -->
+        <div class="workspace" style="position: relative;">
+            <div class="grid-container" id="grid-workspace"></div>
+            <div class="coords-indicator" id="coords-display">Hover over cell...</div>
+            
+            <!-- Dialogue overlay for simulation playtest -->
+            <div id="sim-dialogue-overlay" class="npc-dialog-panel" style="position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%); width: 80%; z-index: 100; background: rgba(10, 15, 25, 0.95); border: 2px solid var(--accent-color); padding: 15px; border-radius: 8px; box-shadow: 0 5px 25px rgba(0,0,0,0.8); box-sizing: border-box; display: none;">
+                <h4 id="sim-dialogue-speaker" style="color: var(--accent-color); margin-bottom: 5px; font-family: 'MedievalSharp', cursive; font-size: 18px;">Speaker</h4>
+                <p id="sim-dialogue-text" style="font-size: 14px; line-height: 1.4; color: #fff;">Dialogue text...</p>
+                <div style="font-size: 10px; color: var(--text-muted); text-align: right; margin-top: 8px; text-transform: uppercase; letter-spacing: 0.5px;">Press SPACE to continue</div>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        // Palette Definitions
+        const TILE_TYPES = {
+            'floor_gray': { name: 'Gray Floor', emoji: '⬜', color: 'var(--color-floor-gray)', width: 1, height: 1, desc: 'Normal walkable path' },
+            'floor_carpet': { name: 'Green Carpet', emoji: '🟩', color: 'var(--color-floor-carpet)', width: 1, height: 1, desc: 'Decorative walkable carpet' },
+            'wall': { name: 'Wall Block', emoji: '🧱', color: 'var(--color-wall)', width: 1, height: 1, desc: 'Non-walkable barrier' },
+            'spawn': { name: 'Player Spawn', emoji: '🏁', color: 'var(--color-spawn)', width: 1, height: 1, desc: 'Starting spot (invisible in game)' },
+            'door_master': { name: 'Master Door', emoji: '🚪', color: 'var(--color-door-master)', width: 2, height: 1, desc: '2x1 locked door (requires 3 keys)' },
+            'egg': { name: 'Egg Block', emoji: '🥚', color: 'var(--color-egg)', width: 2, height: 2, desc: '2x2 egg hatching chamber' },
+            'npc1': { name: 'NPC 1 (Student)', emoji: '🧙', color: 'var(--color-npc1)', width: 1, height: 1, desc: 'Dialogue + battle (gives key)' },
+            'npc2': { name: 'NPC 2 (Student)', emoji: '🧑', color: 'var(--color-npc2)', width: 1, height: 1, desc: 'Dialogue + battle (gives key)' },
+            'boss': { name: 'Boss (4th Person)', emoji: '👹', color: 'var(--color-boss)', width: 1, height: 1, desc: 'Boss battle (unlocks eggs)' },
+            'teleport': { name: 'Teleporter Door', emoji: '🌀', color: 'var(--color-teleport-head)', width: 1, height: 1, desc: 'Step 1: Click Head. Step 2: Click Tail.' },
+            'eraser': { name: 'Eraser', emoji: '🧽', color: '#34495e', width: 1, height: 1, desc: 'Clear selected cell' }
+        };
+
+        let currentBrush = 'floor_gray';
+        let gridWidth = 12;
+        let gridHeight = 12;
+        
+        // 2D Array mapping each cell: { type: 'floor_gray', ...other_metadata }
+        let grid = [];
+
+        // NPC Dialogues dictionary: { 'npc1': 'hello', 'npc2': 'hi' }
+        // Each placed NPC can store its specific dialogue. We can index by anchor coordinates e.g. "x_y"
+        let npcDialogues = {};
+        
+        // Portals lists
+        let teleports = [];
+        let placingTeleportHead = null;
+
+        // DOM elements
+        const gridWorkspace = document.getElementById('grid-workspace');
+        const brushPalette = document.getElementById('brush-palette');
+        const widthInput = document.getElementById('grid-width');
+        const heightInput = document.getElementById('grid-height');
+        const dialogConfig = document.getElementById('dialog-config');
+        const dialogText = document.getElementById('npc-dialog-text');
+        const dialogTitle = document.getElementById('dialog-title');
+        const btnExport = document.getElementById('btn-export');
+        const btnImport = document.getElementById('btn-import');
+        const btnClear = document.getElementById('btn-clear');
+        const jsonData = document.getElementById('json-data');
+        const coordsDisplay = document.getElementById('coords-display');
+
+        // Initialize Palette
+        function initPalette() {
+            brushPalette.innerHTML = '';
+            Object.keys(TILE_TYPES).forEach(type => {
+                const item = TILE_TYPES[type];
+                const div = document.createElement('div');
+                div.className = `palette-item ${type === currentBrush ? 'active' : ''}`;
+                div.dataset.type = type;
+                div.innerHTML = `
+                    <div class="palette-color" style="background-color: ${item.color}">${item.emoji}</div>
+                    <div class="palette-details">
+                        <span class="palette-name">${item.name}</span>
+                        <span class="palette-size">${item.width}x${item.height} - ${item.desc}</span>
+                    </div>
+                `;
+                div.addEventListener('click', () => {
+                    document.querySelectorAll('.palette-item').forEach(el => el.classList.remove('active'));
+                    div.classList.add('active');
+                    currentBrush = type;
+                    updateDialogPanelState();
+                });
+                brushPalette.appendChild(div);
+            });
+        }
+
+        // Show/hide dialogue box based on selected brush
+        function updateDialogPanelState(x = null, y = null) {
+            if (currentBrush === 'npc1' || currentBrush === 'npc2' || currentBrush === 'boss') {
+                dialogConfig.classList.add('active');
+                dialogTitle.textContent = `Dialogue for ${TILE_TYPES[currentBrush].name}`;
+                
+                // If coordinates provided, load existing dialogue for that cell if it exists
+                if (x !== null && y !== null) {
+                    const coordKey = `${x}_${y}`;
+                    dialogText.value = npcDialogues[coordKey] || "";
+                } else {
+                    dialogText.value = "";
+                }
+            } else {
+                dialogConfig.classList.remove('active');
+            }
+        }
+
+        // Initialize Grid
+        function initGrid(w, h) {
+            gridWidth = w;
+            gridHeight = h;
+            grid = [];
+            npcDialogues = {};
+            teleports = [];
+            placingTeleportHead = null;
+            
+            for (let y = 0; y < h; y++) {
+                const row = [];
+                for (let x = 0; x < w; x++) {
+                    // Default tile is gray floor
+                    row.push({ type: 'floor_gray' });
+                }
+                grid.push(row);
+            }
+            renderGrid();
+        }
+
+        // Check if a multi-tile block can fit at coordinates
+        function canPlaceBlock(type, x, y) {
+            const tileInfo = TILE_TYPES[type];
+            if (!tileInfo) return false;
+            
+            // Check boundary limits
+            if (x + tileInfo.width > gridWidth || y + tileInfo.height > gridHeight) {
+                return false;
+            }
+
+            // Check if coordinates overlap with any other multi-tile anchors
+            // For simplicity, we just allow overwriting, but we check if we collide with boundaries.
+            return true;
+        }
+
+        // Render Workspace Grid
+        function renderGrid() {
+            gridWorkspace.innerHTML = '';
+            gridWorkspace.style.gridTemplateColumns = `repeat(${gridWidth}, 40px)`;
+            gridWorkspace.style.gridTemplateRows = `repeat(${gridHeight}, 40px)`;
+
+            for (let y = 0; y < gridHeight; y++) {
+                for (let x = 0; x < gridWidth; x++) {
+                    const cell = document.createElement('div');
+                    cell.className = 'grid-cell';
+                    cell.dataset.x = x;
+                    cell.dataset.y = y;
+
+                    const cellData = grid[y][x];
+                    
+                    // Render default background/colors
+                    if (cellData && cellData.type) {
+                        let emoji = '';
+                        let color = '';
+                        
+                        if (isSimulating) {
+                            // Simulation specifics
+                            if (cellData.type === 'spawn') {
+                                emoji = '';
+                                color = 'var(--color-floor-gray)'; // render as floor in sim
+                            } else if (cellData.type === 'npc1' || cellData.type === 'npc2' || cellData.type === 'boss') {
+                                const coordKey = `${x}_${y}`;
+                                if (simDefeatedNPCs.includes(coordKey)) {
+                                    emoji = '';
+                                    color = 'var(--color-floor-gray)'; // defeated NPC is gone/floor
+                                } else {
+                                    const tileInfo = TILE_TYPES[cellData.type];
+                                    emoji = tileInfo.emoji;
+                                    color = tileInfo.color;
+                                }
+                            } else if (cellData.type === 'door_master') {
+                                const isOpened = simDoorsState.some(d => x >= d.x && x < d.x + d.width && y >= d.y && y < d.y + d.height && d.open);
+                                if (isOpened) {
+                                    emoji = '';
+                                    color = '#7f8c8d'; // open door is gray floor
+                                    cell.style.opacity = '0.5';
+                                    cell.style.border = '1px dashed #fff';
+                                } else {
+                                    // Put padlock on anchor, warning barrier on other parts
+                                    const isAnchor = simDoorsState.some(d => d.x === x && d.y === y);
+                                    emoji = isAnchor ? '🔒' : '🚧';
+                                    color = 'var(--color-door-master)';
+                                }
+                            } else if (cellData.type === 'egg') {
+                                const isHatched = simHatchedEggs.includes(`${x}_${y}`);
+                                if (isHatched) {
+                                    emoji = '💥';
+                                    color = 'var(--color-floor-gray)';
+                                } else {
+                                    emoji = '🥚';
+                                    color = 'var(--color-egg)';
+                                }
+                            } else if (cellData.type === 'teleport_head') {
+                                emoji = '🌀';
+                                color = 'var(--color-teleport-head)';
+                            } else if (cellData.type === 'teleport_tail') {
+                                emoji = '🌀';
+                                color = 'var(--color-teleport-tail)';
+                            } else {
+                                const tileInfo = TILE_TYPES[cellData.type];
+                                if (tileInfo) {
+                                    emoji = tileInfo.emoji;
+                                    color = tileInfo.color;
+                                }
+                            }
+                        } else {
+                            // Standard editor rendering
+                            if (cellData.type === 'teleport_head') {
+                                emoji = '🌀';
+                                color = 'var(--color-teleport-head)';
+                            } else if (cellData.type === 'teleport_tail') {
+                                emoji = '🌀';
+                                color = 'var(--color-teleport-tail)';
+                            } else {
+                                const tileInfo = TILE_TYPES[cellData.type];
+                                if (tileInfo) {
+                                    emoji = tileInfo.emoji;
+                                    color = tileInfo.color;
+                                }
+                            }
+                        }
+                        
+                        if (color) {
+                            cell.style.backgroundColor = color;
+                            cell.textContent = emoji;
+                        }
+                    }
+
+                    // Render player avatar on top
+                    if (isSimulating && simPlayerPos.x === x && simPlayerPos.y === y) {
+                        const playerDiv = document.createElement('div');
+                        playerDiv.style.fontSize = '24px';
+                        playerDiv.style.zIndex = '10';
+                        playerDiv.style.filter = 'drop-shadow(2px 2px 2px rgba(0,0,0,0.8))';
+                        playerDiv.style.animation = 'exploreBounce 0.6s infinite alternate';
+                        playerDiv.style.position = 'absolute';
+                        playerDiv.textContent = '👱‍♂️';
+                        cell.appendChild(playerDiv);
+                    }
+
+                    // Event Listeners for painting
+                    cell.addEventListener('mousedown', (e) => {
+                        handleCellClick(x, y, e.button === 2 || e.shiftKey);
+                    });
+
+                    // Disable right-click menu in workspace
+                    cell.addEventListener('contextmenu', (e) => {
+                        e.preventDefault();
+                    });
+
+                    // Track hovers for multi-tile preview
+                    cell.addEventListener('mouseenter', () => {
+                        coordsDisplay.textContent = `Coordinates: X: ${x}, Y: ${y} | Cell Type: ${cellData ? cellData.type : 'none'}`;
+                        if (!isSimulating) showPlacementPreview(x, y);
+                    });
+
+                    cell.addEventListener('mouseleave', () => {
+                        if (!isSimulating) clearPlacementPreview();
+                    });
+
+                    gridWorkspace.appendChild(cell);
+                }
+            }
+
+            // Now apply footprints for multi-tile anchors placed in the grid (only if not simulating or door/egg is not open/hatched)
+            for (let y = 0; y < gridHeight; y++) {
+                for (let x = 0; x < gridWidth; x++) {
+                    const cellData = grid[y][x];
+                    if (cellData && cellData.type) {
+                        const tileInfo = TILE_TYPES[cellData.type];
+                        if (tileInfo && (tileInfo.width > 1 || tileInfo.height > 1)) {
+                            // Check if opened/hatched in simulation
+                            if (isSimulating) {
+                                if (cellData.type === 'door_master' && simDoorsState.some(d => x >= d.x && x < d.x + d.width && y >= d.y && y < d.y + d.height && d.open)) {
+                                    continue;
+                                }
+                                if (cellData.type === 'egg' && simHatchedEggs.some(key => {
+                                    const [ex, ey] = key.split('_').map(Number);
+                                    return x >= ex && x < ex + tileInfo.width && y >= ey && y < ey + tileInfo.height;
+                                })) {
+                                    continue;
+                                }
+                            }
+                            applyFootprintClasses(cellData.type, x, y);
+                        }
+                    }
+                }
+            }
+        }
+
+        // Apply footprint styling to the grid DOM
+        function applyFootprintClasses(type, anchorX, anchorY) {
+            const tileInfo = TILE_TYPES[type];
+            let footprintClass = '';
+            if (type === 'door_master') footprintClass = 'footprint-master-door';
+            if (type === 'egg') footprintClass = 'footprint-egg';
+
+            for (let dy = 0; dy < tileInfo.height; dy++) {
+                for (let dx = 0; dx < tileInfo.width; dx++) {
+                    const targetX = anchorX + dx;
+                    const targetY = anchorY + dy;
+                    if (targetX < gridWidth && targetY < gridHeight) {
+                        const cellElement = document.querySelector(`.grid-cell[data-x="${targetX}"][data-y="${targetY}"]`);
+                        if (cellElement) {
+                            if (dx === 0 && dy === 0) {
+                                cellElement.classList.add('cell-anchor');
+                            } else {
+                                cellElement.classList.add(footprintClass);
+                                cellElement.textContent = ''; // clear text, footprint inherits visual anchor
+                                cellElement.style.backgroundColor = ''; // clear style, let CSS style handle footprint
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        // Show footprint preview on hover
+        function showPlacementPreview(x, y) {
+            clearPlacementPreview();
+            
+            const brushInfo = TILE_TYPES[currentBrush];
+            if (!brushInfo) return;
+
+            const isValid = canPlaceBlock(currentBrush, x, y);
+
+            for (let dy = 0; dy < brushInfo.height; dy++) {
+                for (let dx = 0; dx < brushInfo.width; dx++) {
+                    const targetX = x + dx;
+                    const targetY = y + dy;
+                    if (targetX < gridWidth && targetY < gridHeight) {
+                        const cell = document.querySelector(`.grid-cell[data-x="${targetX}"][data-y="${targetY}"]`);
+                        if (cell) {
+                            if (isValid) {
+                                cell.style.outline = '2px dashed var(--accent-color)';
+                            } else {
+                                cell.classList.add('cell-invalid');
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        // Clear previews
+        function clearPlacementPreview() {
+            document.querySelectorAll('.grid-cell').forEach(cell => {
+                cell.style.outline = '';
+                cell.classList.remove('cell-invalid');
+            });
+        }
+
+        // Handle cell click / paint
+        function handleCellClick(x, y, isRightClick = false) {
+            if (isSimulating) return;
+            let activeBrush = isRightClick ? 'eraser' : currentBrush;
+
+            // Clean teleport heads that were abandoned
+            if (activeBrush !== 'teleport' && placingTeleportHead !== null) {
+                grid[placingTeleportHead.y][placingTeleportHead.x] = { type: 'floor_gray' };
+                placingTeleportHead = null;
+            }
+
+            if (activeBrush === 'eraser') {
+                const cellData = grid[y][x];
+                if (cellData) {
+                    if (cellData.type === 'npc1' || cellData.type === 'npc2' || cellData.type === 'boss') {
+                        delete npcDialogues[`${x}_${y}`];
+                    }
+                    if (cellData.type === 'teleport_head' || cellData.type === 'teleport_tail') {
+                        // Find pair and delete both
+                        const index = teleports.findIndex(tp => 
+                            (tp.head.x === x && tp.head.y === y) || (tp.tail.x === x && tp.tail.y === y)
+                        );
+                        if (index !== -1) {
+                            const pair = teleports[index];
+                            grid[pair.head.y][pair.head.x] = { type: 'floor_gray' };
+                            grid[pair.tail.y][pair.tail.x] = { type: 'floor_gray' };
+                            teleports.splice(index, 1);
+                        }
+                    }
+                }
+                grid[y][x] = { type: 'floor_gray' };
+                renderGrid();
+                return;
+            }
+
+            // Before painting over any cell, check if we are overwriting an existing teleporter
+            const existingCell = grid[y][x];
+            if (existingCell && (existingCell.type === 'teleport_head' || existingCell.type === 'teleport_tail')) {
+                const index = teleports.findIndex(tp => 
+                    (tp.head.x === x && tp.head.y === y) || (tp.tail.x === x && tp.tail.y === y)
+                );
+                if (index !== -1) {
+                    const pair = teleports[index];
+                    grid[pair.head.y][pair.head.x] = { type: 'floor_gray' };
+                    grid[pair.tail.y][pair.tail.x] = { type: 'floor_gray' };
+                    teleports.splice(index, 1);
+                }
+            }
+
+            // Painting teleporter
+            if (activeBrush === 'teleport') {
+                if (placingTeleportHead === null) {
+                    // Click 1: Place head
+                    placingTeleportHead = { x, y };
+                    grid[y][x] = { type: 'teleport_head' };
+                    renderGrid();
+                    // Alert or status updates
+                    coordsDisplay.textContent = "Placed Portal Head! Now click another tile to place the Tail portal.";
+                } else {
+                    // Click 2: Place tail
+                    if (placingTeleportHead.x === x && placingTeleportHead.y === y) {
+                        alert("Tail portal cannot be placed on the exact same tile as Head!");
+                        return;
+                    }
+                    grid[y][x] = { type: 'teleport_tail' };
+                    teleports.push({
+                        head: { x: placingTeleportHead.x, y: placingTeleportHead.y },
+                        tail: { x, y }
+                    });
+                    placingTeleportHead = null;
+                    renderGrid();
+                    coordsDisplay.textContent = "Teleport Portal pair placed and linked successfully!";
+                }
+                return;
+            }
+
+            // Normal brush painting
+            if (!canPlaceBlock(activeBrush, x, y)) {
+                alert("Cannot place block here: exceeds grid boundaries!");
+                return;
+            }
+
+            // Clean footprints of other blocks we might be overriding
+            const brushInfo = TILE_TYPES[activeBrush];
+            for (let dy = 0; dy < brushInfo.height; dy++) {
+                for (let dx = 0; dx < brushInfo.width; dx++) {
+                    const targetX = x + dx;
+                    const targetY = y + dy;
+                    if (targetX < gridWidth && targetY < gridHeight) {
+                        const currentCell = grid[targetY][targetX];
+                        if (currentCell) {
+                            if (currentCell.type === 'npc1' || currentCell.type === 'npc2' || currentCell.type === 'boss') {
+                                delete npcDialogues[`${targetX}_${targetY}`];
+                            }
+                            if (currentCell.type === 'teleport_head' || currentCell.type === 'teleport_tail') {
+                                const index = teleports.findIndex(tp => 
+                                    (tp.head.x === targetX && tp.head.y === targetY) || (tp.tail.x === targetX && tp.tail.y === targetY)
+                                );
+                                if (index !== -1) {
+                                    const pair = teleports[index];
+                                    grid[pair.head.y][pair.head.x] = { type: 'floor_gray' };
+                                    grid[pair.tail.y][pair.tail.x] = { type: 'floor_gray' };
+                                    teleports.splice(index, 1);
+                                }
+                            }
+                        }
+                        grid[targetY][targetX] = { type: 'floor_gray' };
+                    }
+                }
+            }
+
+            // Place the anchor tile
+            grid[y][x] = { type: activeBrush };
+
+            // NPC dialogue registration
+            if (activeBrush === 'npc1' || activeBrush === 'npc2' || activeBrush === 'boss') {
+                const text = dialogText.value.trim() || `Hello, adventurer! I am the ${activeBrush === 'boss' ? 'Boss' : (activeBrush === 'npc1' ? 'Student A' : 'Student B')}. Prepare to battle!`;
+                npcDialogues[`${x}_${y}`] = text;
+            }
+
+            renderGrid();
+        }
+
+        // Resize grid controls
+        widthInput.addEventListener('change', () => {
+            let newW = parseInt(widthInput.value);
+            if (newW >= 8 && newW <= 64) {
+                resizeGrid(newW, gridHeight);
+            }
+        });
+
+        heightInput.addEventListener('change', () => {
+            let newH = parseInt(heightInput.value);
+            if (newH >= 8 && newH <= 64) {
+                resizeGrid(gridWidth, newH);
+            }
+        });
+
+        function resizeGrid(newW, newH) {
+            // Create a new grid structure, keeping old cells where possible
+            let newGrid = [];
+            for (let y = 0; y < newH; y++) {
+                const row = [];
+                for (let x = 0; x < newW; x++) {
+                    if (y < gridHeight && x < gridWidth) {
+                        row.push(grid[y][x]);
+                    } else {
+                        row.push({ type: 'floor_gray' });
+                    }
+                }
+                newGrid.push(row);
+            }
+
+            // Clean NPC dialogues that are out of bounds
+            Object.keys(npcDialogues).forEach(key => {
+                const [x, y] = key.split('_').map(Number);
+                if (x >= newW || y >= newH) {
+                    delete npcDialogues[key];
+                }
+            });
+
+            grid = newGrid;
+            gridWidth = newW;
+            gridHeight = newH;
+            renderGrid();
+        }
+
+        // Clear grid entirely
+        btnClear.addEventListener('click', () => {
+            if (confirm("Are you sure you want to reset the grid? All work will be lost.")) {
+                initGrid(parseInt(widthInput.value), parseInt(heightInput.value));
+            }
+        });
+
+        // Export grid to JSON
+        btnExport.addEventListener('click', () => {
+            const npcsList = [];
+            const doorsList = [];
+            const eggsList = [];
+            const headsList = [];
+            const tailsList = [];
+            let spawnPoint = null;
+
+            // We scan the grid to record positions of custom items
+            for (let y = 0; y < gridHeight; y++) {
+                for (let x = 0; x < gridWidth; x++) {
+                    const cell = grid[y][x];
+                    if (!cell) continue;
+
+                    if (cell.type === 'spawn') {
+                        spawnPoint = { x, y };
+                    } else if (cell.type === 'npc1' || cell.type === 'npc2' || cell.type === 'boss') {
+                        npcsList.push({
+                            id: cell.type,
+                            x,
+                            y,
+                            dialogue: npcDialogues[`${x}_${y}`] || "Prepare to battle!"
+                        });
+                    } else if (cell.type === 'door_master') {
+                        doorsList.push({ x, y, width: 2, height: 1, open: false });
+                    } else if (cell.type === 'egg') {
+                        eggsList.push({ x, y, width: 2, height: 2 });
+                    } else if (cell.type === 'teleport_head') {
+                        headsList.push({ x, y });
+                    } else if (cell.type === 'teleport_tail') {
+                        tailsList.push({ x, y });
+                    }
+                }
+            }
+
+            // Link teleports directly from editor array
+            const teleportsList = JSON.parse(JSON.stringify(teleports));
+
+            // Simplify grid structure for JSON: just write names of tile types
+            const simplifiedGrid = grid.map(row => row.map(cell => cell.type));
+
+            const mapData = {
+                width: gridWidth,
+                height: gridHeight,
+                spawn: spawnPoint,
+                grid: simplifiedGrid,
+                npcs: npcsList,
+                doors: doorsList,
+                eggs: eggsList,
+                teleports: teleportsList
+            };
+
+            jsonData.value = JSON.stringify(mapData, null, 4);
+            alert("Map JSON exported successfully! Copy the code in the 'Map Code' text box.");
+        });
+
+        // Import grid from JSON
+        btnImport.addEventListener('click', () => {
+            const rawText = jsonData.value.trim();
+            if (!rawText) {
+                alert("Please paste the JSON map code into the text area first!");
+                return;
+            }
+
+            try {
+                const mapData = JSON.parse(rawText);
+                if (!mapData.width || !mapData.height || !mapData.grid) {
+                    throw new Error("Invalid map JSON structure. Must contain width, height, and grid.");
+                }
+
+                gridWidth = mapData.width;
+                gridHeight = mapData.height;
+                widthInput.value = gridWidth;
+                heightInput.value = gridHeight;
+
+                npcDialogues = {};
+                grid = [];
+
+                // Recreate grid
+                for (let y = 0; y < gridHeight; y++) {
+                    const row = [];
+                    for (let x = 0; x < gridWidth; x++) {
+                        const tileType = mapData.grid[y][x] || 'floor_gray';
+                        row.push({ type: tileType });
+                    }
+                    grid.push(row);
+                }
+
+                // Restore NPC dialogues
+                if (mapData.npcs) {
+                    mapData.npcs.forEach(npc => {
+                        npcDialogues[`${npc.x}_${npc.y}`] = npc.dialogue;
+                    });
+                }
+                
+                // Restore teleports list
+                teleports = mapData.teleports || [];
+                placingTeleportHead = null;
+
+                renderGrid();
+                alert("Map loaded successfully!");
+
+            } catch (err) {
+                alert(`Import failed: ${err.message}`);
+            }
+        });
+
+        // Simulation variables and functions
+        let isSimulating = false;
+        let simPlayerPos = { x: 0, y: 0 };
+        let simKeysCollected = 0;
+        let simKeysRequired = 0;
+        let simDefeatedNPCs = [];
+        let simHatchedEggs = [];
+        let simDoorsState = [];
+        let simJustTeleported = false;
+        let simDialogue = null;
+
+        const btnTest = document.getElementById('btn-test');
+        const simDialogueOverlay = document.getElementById('sim-dialogue-overlay');
+        const simDialogueSpeaker = document.getElementById('sim-dialogue-speaker');
+        const simDialogueText = document.getElementById('sim-dialogue-text');
+
+        // Dynamic bounce animation styles
+        const bounceStyle = document.createElement('style');
+        bounceStyle.textContent = `
+            @keyframes exploreBounce {
+                0% { transform: translateY(0); }
+                100% { transform: translateY(-4px); }
+            }
+        `;
+        document.head.appendChild(bounceStyle);
+
+        btnTest.addEventListener('click', () => {
+            if (isSimulating) {
+                stopSimulation();
+            } else {
+                startSimulation();
+            }
+        });
+
+        function startSimulation() {
+            // Find player spawn point
+            let spawnX = -1, spawnY = -1;
+            for (let y = 0; y < gridHeight; y++) {
+                for (let x = 0; x < gridWidth; x++) {
+                    if (grid[y][x].type === 'spawn') {
+                        spawnX = x;
+                        spawnY = y;
+                        break;
+                    }
+                }
+            }
+
+            if (spawnX === -1 || spawnY === -1) {
+                alert("Cannot start playtest: You must place a Player Spawn tile (🏁) first!");
+                return;
+            }
+
+            isSimulating = true;
+            simPlayerPos = { x: spawnX, y: spawnY };
+            simKeysCollected = 0;
+            simDefeatedNPCs = [];
+            simHatchedEggs = [];
+            simJustTeleported = false;
+            simDialogue = null;
+
+            // Load doors configuration from editor
+            simDoorsState = [];
+            for (let y = 0; y < gridHeight; y++) {
+                for (let x = 0; x < gridWidth; x++) {
+                    if (grid[y][x].type === 'door_master') {
+                        // Check if we already registered this door anchor
+                        if (!simDoorsState.some(d => d.x === x && d.y === y)) {
+                            // Find dimension of door: we scaled it to 2x1
+                            simDoorsState.push({ x, y, width: 2, height: 1, open: false });
+                        }
+                    }
+                }
+            }
+
+            // Required keys is count of student NPCs (npc1 and npc2) on map
+            let studentsCount = 0;
+            for (let y = 0; y < gridHeight; y++) {
+                for (let x = 0; x < gridWidth; x++) {
+                    if (grid[y][x].type === 'npc1' || grid[y][x].type === 'npc2') {
+                        studentsCount++;
+                    }
+                }
+            }
+            simKeysRequired = studentsCount;
+
+            btnTest.textContent = "🛑 Stop Playtest";
+            btnTest.style.backgroundColor = "var(--danger-color)";
+            btnTest.style.color = "white";
+
+            renderGrid();
+            alert("Playtest started! Use Arrow Keys or WASD to walk. Stand next to NPCs/doors/eggs and press SPACE to interact!");
+        }
+
+        function stopSimulation() {
+            isSimulating = false;
+            btnTest.textContent = "🎮 Play Test (Simulation)";
+            btnTest.style.backgroundColor = "var(--success-color)";
+            btnTest.style.color = "#000";
+            simDialogueOverlay.style.display = 'none';
+            simDialogue = null;
+            renderGrid();
+        }
+
+        function showSimDialogue(speaker, textLines, onComplete = null) {
+            simDialogue = {
+                speaker: speaker,
+                lines: typeof textLines === 'string' ? [textLines] : textLines,
+                currentIndex: 0,
+                onComplete: onComplete
+            };
+            simDialogueOverlay.style.display = 'block';
+            simDialogueSpeaker.textContent = speaker;
+            simDialogueText.textContent = simDialogue.lines[0];
+        }
+
+        function advanceSimDialogue() {
+            if (!simDialogue) return;
+            simDialogue.currentIndex++;
+            if (simDialogue.currentIndex < simDialogue.lines.length) {
+                simDialogueText.textContent = simDialogue.lines[simDialogue.currentIndex];
+            } else {
+                const cb = simDialogue.onComplete;
+                simDialogueOverlay.style.display = 'none';
+                simDialogue = null;
+                if (cb) cb();
+            }
+        }
+
+        // Helper: Check if cell coords are blocked in sim mode
+        function getSimMultiTileInfo(x, y) {
+            // Check doors
+            for (let d of simDoorsState) {
+                if (x >= d.x && x < d.x + d.width && y >= d.y && y < d.y + d.height) {
+                    return { type: 'door_master', data: d };
+                }
+            }
+            // Check eggs
+            for (let yIdx = 0; yIdx < gridHeight; yIdx++) {
+                for (let xIdx = 0; xIdx < gridWidth; xIdx++) {
+                    if (grid[yIdx][xIdx].type === 'egg') {
+                        if (x >= xIdx && x < xIdx + 2 && y >= yIdx && y < yIdx + 2) {
+                            return { type: 'egg', x: xIdx, y: yIdx };
+                        }
+                    }
+                }
+            }
+            // Check NPCs
+            if (grid[y][x].type === 'npc1' || grid[y][x].type === 'npc2' || grid[y][x].type === 'boss') {
+                return { type: 'npc', id: grid[y][x].type };
+            }
+            // Check teleports
+            for (let tp of teleports) {
+                if (tp.head.x === x && tp.head.y === y) {
+                    return { type: 'teleport_head', data: tp };
+                }
+                if (tp.tail.x === x && tp.tail.y === y) {
+                    return { type: 'teleport_tail', data: tp };
+                }
+            }
+            return null;
+        }
+
+        function moveSimPlayer(dx, dy) {
+            const nextX = simPlayerPos.x + dx;
+            const nextY = simPlayerPos.y + dy;
+
+            if (nextX < 0 || nextX >= gridWidth || nextY < 0 || nextY >= gridHeight) {
+                return;
+            }
+
+            const cellType = grid[nextY][nextX].type;
+            if (cellType === 'wall') return;
+
+            const info = getSimMultiTileInfo(nextX, nextY);
+            if (info) {
+                if (info.type === 'door_master' && !info.data.open) return; // blocked by barrier
+                if (info.type === 'egg') return; // blocked by egg
+                if (info.type === 'npc' && !simDefeatedNPCs.includes(`${nextX}_${nextY}`)) return; // blocked by NPC
+            }
+
+            // Move
+            simPlayerPos.x = nextX;
+            simPlayerPos.y = nextY;
+            renderGrid();
+
+            // Check teleport portals
+            const stepOn = getSimMultiTileInfo(nextX, nextY);
+            if (stepOn && (stepOn.type === 'teleport_head' || stepOn.type === 'teleport_tail')) {
+                if (!simJustTeleported) {
+                    // Flash & Teleport
+                    simDialogueOverlay.style.display = 'block';
+                    simDialogueSpeaker.textContent = "Magical portal";
+                    simDialogueText.textContent = "🌀 Teleporting...";
+                    setTimeout(() => {
+                        const target = (stepOn.type === 'teleport_head') ? stepOn.data.tail : stepOn.data.head;
+                        simPlayerPos = { x: target.x, y: target.y };
+                        simJustTeleported = true;
+                        simDialogueOverlay.style.display = 'none';
+                        renderGrid();
+                    }, 400);
+                }
+            } else {
+                simJustTeleported = false;
+            }
+        }
+
+        function handleSimInteraction() {
+            const p = simPlayerPos;
+            const neighbors = [
+                { x: p.x, y: p.y - 1 },
+                { x: p.x, y: p.y + 1 },
+                { x: p.x - 1, y: p.y },
+                { x: p.x + 1, y: p.y }
+            ];
+
+            for (let n of neighbors) {
+                if (n.x < 0 || n.x >= gridWidth || n.y < 0 || n.y >= gridHeight) continue;
+
+                const info = getSimMultiTileInfo(n.x, n.y);
+                if (info) {
+                    if (info.type === 'npc') {
+                        const coordKey = `${n.x}_${n.y}`;
+                        if (!simDefeatedNPCs.includes(coordKey)) {
+                            const npcDialogueText = npcDialogues[coordKey] || "Prepare to battle!";
+                            showSimDialogue(
+                                info.id === 'boss' ? "Temple Boss (👹)" : "Sage Student (🧙)",
+                                [npcDialogueText, "⚔️ Fighting Student in simulation...", "🏆 Defeated!"],
+                                () => {
+                                    simDefeatedNPCs.push(coordKey);
+                                    if (info.id !== 'boss') {
+                                        simKeysCollected++;
+                                        alert(`You obtained a simulation key! Total: ${simKeysCollected}/${simKeysRequired}`);
+                                    } else {
+                                        alert("You defeated the boss! The 2x2 eggs are now accessible.");
+                                    }
+                                    renderGrid();
+                                }
+                            );
+                            return;
+                        }
+                    } else if (info.type === 'door_master' && !info.data.open) {
+                        if (simKeysCollected >= simKeysRequired) {
+                            showSimDialogue(
+                                "System",
+                                ["You insert the simulation keys...", "The Magic Barrier opens!"],
+                                () => {
+                                    info.data.open = true;
+                                    renderGrid();
+                                }
+                            );
+                        } else {
+                            showSimDialogue(
+                                "Master Door",
+                                `This barrier is sealed. You need all keys from the Students. (Have: ${simKeysCollected}/${simKeysRequired})`
+                            );
+                        }
+                        return;
+                    } else if (info.type === 'egg') {
+                        const coordKey = `${info.x}_${info.y}`;
+                        if (!simHatchedEggs.includes(coordKey)) {
+                            showSimDialogue(
+                                "Egg Chamber",
+                                ["The simulation egg is cracking... 💥", "A Tigrier hatched!"],
+                                () => {
+                                    simHatchedEggs.push(coordKey);
+                                    renderGrid();
+                                    alert("Congratulations! Playtest completed successfully. Stopping simulation.");
+                                    stopSimulation();
+                                }
+                            );
+                        }
+                        return;
+                    }
+                }
+            }
+        }
+
+        window.addEventListener('keydown', (e) => {
+            if (!isSimulating) return;
+            
+            if (simDialogue) {
+                if (e.key === ' ' || e.key === 'Spacebar') {
+                    e.preventDefault();
+                    advanceSimDialogue();
+                }
+                return;
+            }
+
+            const keysToPrevent = ['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', ' ', 'w', 'a', 's', 'd', 'W', 'A', 'S', 'D'];
+            if (keysToPrevent.includes(e.key)) {
+                e.preventDefault();
+            }
+
+            let dx = 0;
+            let dy = 0;
+
+            if (e.key === 'ArrowUp' || e.key === 'w' || e.key === 'W') dy = -1;
+            else if (e.key === 'ArrowDown' || e.key === 's' || e.key === 'S') dy = 1;
+            else if (e.key === 'ArrowLeft' || e.key === 'a' || e.key === 'A') dx = -1;
+            else if (e.key === 'ArrowRight' || e.key === 'd' || e.key === 'D') dx = 1;
+            else if (e.key === ' ' || e.key === 'Spacebar') {
+                handleSimInteraction();
+                return;
+            }
+
+            if (dx !== 0 || dy !== 0) {
+                moveSimPlayer(dx, dy);
+            }
+        });
+
+        // Setup Init
+        initPalette();
+        initGrid(12, 12);
+    </script>
+</body>
+</html>
