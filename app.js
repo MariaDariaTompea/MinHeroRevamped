@@ -1719,6 +1719,7 @@ btnExploreLeave.addEventListener('click', () => {
     buildTower();
 });
 
+let lastExploreMoveTime = 0;
 // Keyboard event listener for explorer mode
 window.addEventListener('keydown', (e) => {
     if (!state.exploreActive || state.exploreInCombat) return;
@@ -1753,7 +1754,11 @@ window.addEventListener('keydown', (e) => {
     }
 
     if (dx !== 0 || dy !== 0) {
-        movePlayer(dx, dy);
+        const now = Date.now();
+        if (now - lastExploreMoveTime >= 150) {
+            lastExploreMoveTime = now;
+            movePlayer(dx, dy);
+        }
     }
 });
 
@@ -1769,7 +1774,7 @@ function movePlayer(dx, dy) {
 
     // Check grid layout limits
     const baseType = state.exploreMap.grid[nextY][nextX] || 'floor_gray';
-    if (baseType === 'wall') {
+    if (baseType === 'wall' || baseType === 'invisible_wall') {
         return;
     }
 

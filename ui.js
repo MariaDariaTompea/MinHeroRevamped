@@ -175,6 +175,15 @@ function getMultiTileInfo(x, y) {
         }
     }
     
+    // Check custom blocks
+    if (state.exploreMap.custom_blocks) {
+        for (let b of state.exploreMap.custom_blocks) {
+            if (x >= b.x && x < b.x + b.width && y >= b.y && y < b.y + b.height) {
+                return { type: 'custom_block', data: b };
+            }
+        }
+    }
+    
     // Check teleports
     if (state.exploreMap.teleports) {
         for (let tp of state.exploreMap.teleports) {
@@ -235,21 +244,44 @@ function renderExploreMap() {
             cell.style.width = `${cellSize}px`;
             cell.style.height = `${cellSize}px`;
             cell.style.fontSize = `${Math.floor(cellSize * 0.55)}px`;
+            cell.style.zIndex = '';
             
             // Default background tile class from grid definition
             const baseType = state.exploreMap.grid[y][x] || 'floor_gray';
             if (baseType === 'wall') {
                 cell.classList.add('tile-wall');
                 cell.textContent = '🧱';
+            } else if (baseType === 'invisible_wall') {
+                cell.classList.add('tile-floor-gray');
             } else if (baseType === 'floor_carpet') {
                 cell.classList.add('tile-floor-carpet');
             } else {
                 cell.classList.add('tile-floor-gray');
             }
             
-            // Check if there is a multi-tile block or entity
+            // Check for custom blocks background
+            if (state.exploreMap.custom_blocks) {
+                const block = state.exploreMap.custom_blocks.find(b => b.x === x && b.y === y);
+                if (block) {
+                    const imgDiv = document.createElement('div');
+                    imgDiv.style.position = 'absolute';
+                    imgDiv.style.left = '0';
+                    imgDiv.style.top = '0';
+                    imgDiv.style.width = `${cellSize * 6}px`;
+                    imgDiv.style.height = `${cellSize * 6}px`;
+                    imgDiv.style.backgroundImage = `url('${block.image}')`;
+                    imgDiv.style.backgroundSize = '100% 100%';
+                    imgDiv.style.zIndex = '5';
+                    imgDiv.style.pointerEvents = 'none';
+                    cell.appendChild(imgDiv);
+                    cell.style.zIndex = '10';
+                }
+            }
+
+            // Check if there is an active multi-tile block or entity (excluding custom block background)
             const info = getMultiTileInfo(x, y);
-            if (info) {
+            if (info && info.type !== 'custom_block') {
+                cell.style.zIndex = '20';
                 if (info.type === 'door_master') {
                     if (info.data.open) {
                         cell.classList.remove('tile-wall');
@@ -304,6 +336,7 @@ function renderExploreMap() {
                 playerDiv.style.fontSize = `${Math.floor(cellSize * 0.65)}px`;
                 playerDiv.textContent = state.heroGender === 'boy' ? '👱‍♂️' : '👱‍♀️';
                 cell.appendChild(playerDiv);
+                cell.style.zIndex = '20';
             }
             
             exploreMapGrid.appendChild(cell);

@@ -69,13 +69,18 @@
 
         .main-container {
             display: grid;
-            grid-template-columns: 320px 1fr;
+            grid-template-columns: 320px 1fr 320px;
             gap: 20px;
-            max-width: 1500px;
+            max-width: 1700px;
             margin: 0 auto;
         }
 
-        @media (max-width: 1024px) {
+        @media (max-width: 1200px) {
+            .main-container {
+                grid-template-columns: 320px 1fr;
+            }
+        }
+        @media (max-width: 800px) {
             .main-container {
                 grid-template-columns: 1fr;
             }
@@ -273,6 +278,10 @@
             background-color: rgba(243, 156, 18, 0.3) !important;
             border: 1px dashed var(--color-egg) !important;
         }
+        .footprint-custom-block {
+            background-color: rgba(44, 62, 80, 0.4) !important;
+            border: 1px dashed rgba(255, 255, 255, 0.15) !important;
+        }
 
         /* Highlight classes */
         .cell-anchor {
@@ -306,6 +315,43 @@
             padding: 3px 8px;
             border-radius: 4px;
         }
+
+        .block-item {
+            aspect-ratio: 1;
+            border: 2px solid var(--border-color);
+            border-radius: 6px;
+            cursor: pointer;
+            background-size: contain;
+            background-repeat: no-repeat;
+            background-position: center;
+            background-color: rgba(0, 0, 0, 0.4);
+            transition: border-color 0.2s, transform 0.2s, box-shadow 0.2s;
+            position: relative;
+        }
+        .block-item:hover {
+            border-color: var(--accent-color);
+            transform: scale(1.05);
+        }
+        .block-item.active {
+            border-color: var(--accent-color);
+            box-shadow: 0 0 10px var(--accent-color);
+        }
+        .block-item-label {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: rgba(0, 0, 0, 0.7);
+            font-size: 10px;
+            text-align: center;
+            color: #fff;
+            padding: 2px 0;
+            border-bottom-left-radius: 4px;
+            border-bottom-right-radius: 4px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
     </style>
 </head>
 <body>
@@ -325,11 +371,11 @@
             <div class="form-row">
                 <div class="form-group">
                     <label for="grid-width">Width</label>
-                    <input type="number" id="grid-width" value="12" min="8" max="64">
+                    <input type="number" id="grid-width" value="12" min="8" max="150">
                 </div>
                 <div class="form-group">
                     <label for="grid-height">Height</label>
-                    <input type="number" id="grid-height" value="12" min="8" max="64">
+                    <input type="number" id="grid-height" value="12" min="8" max="150">
                 </div>
             </div>
             
@@ -365,6 +411,14 @@
 
         <!-- Main Grid Workspace -->
         <div class="workspace" style="position: relative;">
+            <!-- Zoom Controls -->
+            <div style="margin-bottom: 15px; display: flex; gap: 10px; align-items: center; z-index: 10; background: rgba(0,0,0,0.4); padding: 8px 12px; border-radius: 8px; border: 1px solid var(--border-color);">
+                <button id="btn-zoom-out" class="btn btn-secondary" style="margin: 0; padding: 4px 10px; font-size: 12px; height: auto; min-height: auto;">🔍- Zoom Out</button>
+                <span id="zoom-level-display" style="font-size: 12px; font-family: monospace; font-weight: bold; color: var(--accent-color); min-width: 80px; text-align: center;">Zoom: 100%</span>
+                <button id="btn-zoom-in" class="btn btn-secondary" style="margin: 0; padding: 4px 10px; font-size: 12px; height: auto; min-height: auto;">🔍+ Zoom In</button>
+                <button id="btn-zoom-reset" class="btn btn-secondary" style="margin: 0; padding: 4px 10px; font-size: 12px; height: auto; min-height: auto; background-color: #34495e;">Reset</button>
+            </div>
+
             <div class="grid-container" id="grid-workspace"></div>
             <div class="coords-indicator" id="coords-display">Hover over cell...</div>
             
@@ -376,6 +430,28 @@
             </div>
         </div>
 
+        <!-- Block Collection Panel (Right Side) -->
+        <div class="panel">
+            <h2 class="panel-title">Block Collection</h2>
+            
+            <div class="form-group">
+                <label for="chapter-select">Select Chapter</label>
+                <select id="chapter-select" style="width: 100%;">
+                    <option value="Chapter 1">Chapter 1</option>
+                    <option value="Chapter 2">Chapter 2</option>
+                    <option value="Chapter 3">Chapter 3</option>
+                    <option value="Chapter 4">Chapter 4</option>
+                </select>
+            </div>
+            
+            <div class="form-group" style="flex: 1; display: flex; flex-direction: column;">
+                <label>6x6 Custom Blocks</label>
+                <div id="blocks-collection" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(80px, 1fr)); gap: 10px; max-height: 550px; overflow-y: auto; padding: 10px; border: 1px solid var(--border-color); border-radius: 6px; background: rgba(0,0,0,0.25); box-sizing: border-box; flex: 1;">
+                    <!-- Injected by script -->
+                </div>
+            </div>
+        </div>
+
     </div>
 
     <script>
@@ -384,6 +460,7 @@
             'floor_gray': { name: 'Gray Floor', emoji: '⬜', color: 'var(--color-floor-gray)', width: 1, height: 1, desc: 'Normal walkable path' },
             'floor_carpet': { name: 'Green Carpet', emoji: '🟩', color: 'var(--color-floor-carpet)', width: 1, height: 1, desc: 'Decorative walkable carpet' },
             'wall': { name: 'Wall Block', emoji: '🧱', color: 'var(--color-wall)', width: 1, height: 1, desc: 'Non-walkable barrier' },
+            'invisible_wall': { name: 'Invisible Wall', emoji: '👻', color: 'rgba(231, 76, 60, 0.35)', width: 1, height: 1, desc: 'Solid barrier, invisible in game' },
             'spawn': { name: 'Player Spawn', emoji: '🏁', color: 'var(--color-spawn)', width: 1, height: 1, desc: 'Starting spot (invisible in game)' },
             'door_master': { name: 'Master Door', emoji: '🚪', color: 'var(--color-door-master)', width: 2, height: 1, desc: '2x1 locked door (requires 3 keys)' },
             'egg': { name: 'Egg Block', emoji: '🥚', color: 'var(--color-egg)', width: 2, height: 2, desc: '2x2 egg hatching chamber' },
@@ -392,6 +469,33 @@
             'boss': { name: 'Boss (4th Person)', emoji: '👹', color: 'var(--color-boss)', width: 1, height: 1, desc: 'Boss battle (unlocks eggs)' },
             'teleport': { name: 'Teleporter Door', emoji: '🌀', color: 'var(--color-teleport-head)', width: 1, height: 1, desc: 'Step 1: Click Head. Step 2: Click Tail.' },
             'eraser': { name: 'Eraser', emoji: '🧽', color: '#34495e', width: 1, height: 1, desc: 'Clear selected cell' }
+        };
+
+        // Custom 6x6 Blocks library
+        const CHAPTERS_BLOCKS = {
+            "Chapter 1": [
+                { id: "block1", image: "assets/blocks/block1.png" },
+                { id: "block2", image: "assets/blocks/block2.png" },
+                { id: "block3", image: "assets/blocks/block 3.png" }, // space in name
+                { id: "block4", image: "assets/blocks/block4.png" },
+                { id: "block5", image: "assets/blocks/block5.png" },
+                { id: "block6", image: "assets/blocks/block6.png" },
+                { id: "block7", image: "assets/blocks/block7.png" },
+                { id: "block8", image: "assets/blocks/block8.png" },
+                { id: "block9", image: "assets/blocks/block9.png" },
+                { id: "block10", image: "assets/blocks/block10.png" },
+                { id: "block11", image: "assets/blocks/block11.png" },
+                { id: "block12", image: "assets/blocks/block12.png" },
+                { id: "block13", image: "assets/blocks/block13.png" },
+                { id: "block14", image: "assets/blocks/block14.png" },
+                { id: "block15", image: "assets/blocks/block15.png" },
+                { id: "block16", image: "assets/blocks/block16.png" },
+                { id: "block17", image: "assets/blocks/block17.png" },
+                { id: "block18", image: "assets/blocks/block18.png" }
+            ],
+            "Chapter 2": [],
+            "Chapter 3": [],
+            "Chapter 4": []
         };
 
         let currentBrush = 'floor_gray';
@@ -409,6 +513,11 @@
         let teleports = [];
         let placingTeleportHead = null;
 
+        // Custom blocks list
+        let customBlocks = [];
+        let doorsList = [];
+        let eggsList = [];
+
         // DOM elements
         const gridWorkspace = document.getElementById('grid-workspace');
         const brushPalette = document.getElementById('brush-palette');
@@ -422,6 +531,16 @@
         const btnClear = document.getElementById('btn-clear');
         const jsonData = document.getElementById('json-data');
         const coordsDisplay = document.getElementById('coords-display');
+        const chapterSelect = document.getElementById('chapter-select');
+        const blocksCollection = document.getElementById('blocks-collection');
+
+        // Zoom and Camera controls
+        let zoomLevel = 1.0;
+        let lastSimMoveTime = 0;
+        const btnZoomIn = document.getElementById('btn-zoom-in');
+        const btnZoomOut = document.getElementById('btn-zoom-out');
+        const btnZoomReset = document.getElementById('btn-zoom-reset');
+        const zoomLevelDisplay = document.getElementById('zoom-level-display');
 
         // Initialize Palette
         function initPalette() {
@@ -440,6 +559,7 @@
                 `;
                 div.addEventListener('click', () => {
                     document.querySelectorAll('.palette-item').forEach(el => el.classList.remove('active'));
+                    document.querySelectorAll('.block-item').forEach(el => el.classList.remove('active'));
                     div.classList.add('active');
                     currentBrush = type;
                     updateDialogPanelState();
@@ -447,6 +567,46 @@
                 brushPalette.appendChild(div);
             });
         }
+
+        // Initialize Blocks Collection Panel (Right Side)
+        function initBlocksCollection() {
+            blocksCollection.innerHTML = '';
+            const chapter = chapterSelect.value;
+            const blocks = CHAPTERS_BLOCKS[chapter] || [];
+            
+            if (blocks.length === 0) {
+                blocksCollection.innerHTML = '<div style="grid-column: 1/-1; text-align: center; color: var(--text-muted); font-size: 12px; padding: 20px;">No blocks in this chapter yet</div>';
+                return;
+            }
+            
+            blocks.forEach(block => {
+                const item = document.createElement('div');
+                item.className = 'block-item';
+                item.style.backgroundImage = `url('${block.image}')`;
+                
+                // Add active class if this block is currently selected
+                if (typeof currentBrush === 'object' && currentBrush.type === 'custom_block' && currentBrush.id === block.id) {
+                    item.classList.add('active');
+                }
+                
+                const label = document.createElement('div');
+                label.className = 'block-item-label';
+                label.textContent = block.id;
+                item.appendChild(label);
+                
+                item.addEventListener('click', () => {
+                    document.querySelectorAll('.block-item').forEach(el => el.classList.remove('active'));
+                    document.querySelectorAll('.palette-item').forEach(el => el.classList.remove('active'));
+                    
+                    item.classList.add('active');
+                    currentBrush = { type: 'custom_block', id: block.id, image: block.image };
+                    updateDialogPanelState();
+                });
+                
+                blocksCollection.appendChild(item);
+            });
+        }
+        chapterSelect.addEventListener('change', initBlocksCollection);
 
         // Show/hide dialogue box based on selected brush
         function updateDialogPanelState(x = null, y = null) {
@@ -474,6 +634,9 @@
             npcDialogues = {};
             teleports = [];
             placingTeleportHead = null;
+            doorsList = [];
+            eggsList = [];
+            customBlocks = [];
             
             for (let y = 0; y < h; y++) {
                 const row = [];
@@ -492,20 +655,31 @@
             if (!tileInfo) return false;
             
             // Check boundary limits
-            if (x + tileInfo.width > gridWidth || y + tileInfo.height > gridHeight) {
+            let w = 1, h = 1;
+            if (typeof type === 'object' && type.type === 'custom_block') {
+                w = 6;
+                h = 6;
+            } else {
+                const tileInfo = TILE_TYPES[type];
+                if (tileInfo) {
+                    w = tileInfo.width;
+                    h = tileInfo.height;
+                }
+            }
+            if (x + w > gridWidth || y + h > gridHeight) {
                 return false;
             }
-
-            // Check if coordinates overlap with any other multi-tile anchors
-            // For simplicity, we just allow overwriting, but we check if we collide with boundaries.
             return true;
         }
 
         // Render Workspace Grid
         function renderGrid() {
+            const currentCellSize = Math.round(40 * zoomLevel);
+            const currentFontSize = Math.round(currentCellSize * 0.45);
+
             gridWorkspace.innerHTML = '';
-            gridWorkspace.style.gridTemplateColumns = `repeat(${gridWidth}, 40px)`;
-            gridWorkspace.style.gridTemplateRows = `repeat(${gridHeight}, 40px)`;
+            gridWorkspace.style.gridTemplateColumns = `repeat(${gridWidth}, ${currentCellSize}px)`;
+            gridWorkspace.style.gridTemplateRows = `repeat(${gridHeight}, ${currentCellSize}px)`;
 
             for (let y = 0; y < gridHeight; y++) {
                 for (let x = 0; x < gridWidth; x++) {
@@ -513,9 +687,53 @@
                     cell.className = 'grid-cell';
                     cell.dataset.x = x;
                     cell.dataset.y = y;
+                    cell.style.width = `${currentCellSize}px`;
+                    cell.style.height = `${currentCellSize}px`;
+                    cell.style.fontSize = `${currentFontSize}px`;
+                    cell.style.zIndex = '';
+
+                    // Simulation radius/fog of war
+                    if (isSimulating) {
+                        const dist = Math.max(Math.abs(x - simPlayerPos.x), Math.abs(y - simPlayerPos.y));
+                        if (dist > 6) {
+                            cell.style.opacity = '0.05';
+                        } else if (dist > 4) {
+                            cell.style.opacity = '0.4';
+                        } else {
+                            cell.style.opacity = '1';
+                        }
+                        cell.style.transition = 'opacity 0.25s ease';
+                    } else {
+                        cell.style.opacity = '1';
+                    }
+
+                    // Render custom block background if this cell is an anchor
+                    const blockAnchor = customBlocks.find(b => b.x === x && b.y === y);
+                    if (blockAnchor) {
+                        const imgDiv = document.createElement('div');
+                        imgDiv.style.position = 'absolute';
+                        imgDiv.style.left = '0';
+                        imgDiv.style.top = '0';
+                        imgDiv.style.width = `${currentCellSize * 6}px`;
+                        imgDiv.style.height = `${currentCellSize * 6}px`;
+                        imgDiv.style.backgroundImage = `url('${blockAnchor.image}')`;
+                        imgDiv.style.backgroundSize = '100% 100%';
+                        imgDiv.style.zIndex = '5';
+                        imgDiv.style.pointerEvents = 'none';
+                        cell.appendChild(imgDiv);
+                        cell.style.zIndex = '10';
+                    }
 
                     const cellData = grid[y][x];
                     
+                    // Set higher z-index for active elements that overlay custom blocks
+                    if (cellData && cellData.type) {
+                        const overlayTypes = ['teleport_head', 'teleport_tail', 'spawn', 'npc1', 'npc2', 'boss', 'door_master', 'egg'];
+                        if (overlayTypes.includes(cellData.type)) {
+                            cell.style.zIndex = '20';
+                        }
+                    }
+
                     // Render default background/colors
                     if (cellData && cellData.type) {
                         let emoji = '';
@@ -544,7 +762,6 @@
                                     cell.style.opacity = '0.5';
                                     cell.style.border = '1px dashed #fff';
                                 } else {
-                                    // Put padlock on anchor, warning barrier on other parts
                                     const isAnchor = simDoorsState.some(d => d.x === x && d.y === y);
                                     emoji = isAnchor ? '🔒' : '🚧';
                                     color = 'var(--color-door-master)';
@@ -558,6 +775,12 @@
                                     emoji = '🥚';
                                     color = 'var(--color-egg)';
                                 }
+                            } else if (cellData.type === 'custom_block') {
+                                // Anchor background is already drawn above, we can just treat it as floor gray underlying
+                                color = 'transparent';
+                            } else if (cellData.type === 'invisible_wall') {
+                                emoji = '';
+                                color = 'var(--color-floor-gray)'; // invisible in simulation/playtest
                             } else if (cellData.type === 'teleport_head') {
                                 emoji = '🌀';
                                 color = 'var(--color-teleport-head)';
@@ -579,6 +802,13 @@
                             } else if (cellData.type === 'teleport_tail') {
                                 emoji = '🌀';
                                 color = 'var(--color-teleport-tail)';
+                            } else if (cellData.type === 'invisible_wall') {
+                                emoji = '👻';
+                                color = 'rgba(231, 76, 60, 0.35)';
+                                cell.style.border = '1px dashed #e74c3c';
+                            } else if (cellData.type === 'custom_block') {
+                                // Anchor background is already drawn above, we can just treat it as floor gray underlying
+                                color = 'transparent';
                             } else {
                                 const tileInfo = TILE_TYPES[cellData.type];
                                 if (tileInfo) {
@@ -590,20 +820,28 @@
                         
                         if (color) {
                             cell.style.backgroundColor = color;
-                            cell.textContent = emoji;
+                        }
+                        if (emoji) {
+                            const emojiSpan = document.createElement('span');
+                            emojiSpan.textContent = emoji;
+                            emojiSpan.style.pointerEvents = 'none';
+                            emojiSpan.style.position = 'relative';
+                            emojiSpan.style.zIndex = '15';
+                            cell.appendChild(emojiSpan);
                         }
                     }
 
                     // Render player avatar on top
                     if (isSimulating && simPlayerPos.x === x && simPlayerPos.y === y) {
                         const playerDiv = document.createElement('div');
-                        playerDiv.style.fontSize = '24px';
-                        playerDiv.style.zIndex = '10';
+                        playerDiv.style.fontSize = `${Math.round(currentCellSize * 0.6)}px`;
+                        playerDiv.style.position = 'relative';
+                        playerDiv.style.zIndex = '25';
                         playerDiv.style.filter = 'drop-shadow(2px 2px 2px rgba(0,0,0,0.8))';
                         playerDiv.style.animation = 'exploreBounce 0.6s infinite alternate';
-                        playerDiv.style.position = 'absolute';
                         playerDiv.textContent = '👱‍♂️';
                         cell.appendChild(playerDiv);
+                        cell.style.zIndex = '20';
                     }
 
                     // Event Listeners for painting
@@ -616,9 +854,9 @@
                         e.preventDefault();
                     });
 
-                    // Track hovers for multi-tile preview
+                    // Mouse hover for coordinates and placement preview
                     cell.addEventListener('mouseenter', () => {
-                        coordsDisplay.textContent = `Coordinates: X: ${x}, Y: ${y} | Cell Type: ${cellData ? cellData.type : 'none'}`;
+                        coordsDisplay.textContent = `Coordinates: X: ${x}, Y: ${y} | Cell Type: ${cellData ? cellData.type : 'floor_gray'}`;
                         if (!isSimulating) showPlacementPreview(x, y);
                     });
 
@@ -630,14 +868,18 @@
                 }
             }
 
-            // Now apply footprints for multi-tile anchors placed in the grid (only if not simulating or door/egg is not open/hatched)
+            // Apply custom blocks footprints first
+            customBlocks.forEach(b => {
+                applyFootprintClasses('custom_block', b.x, b.y);
+            });
+
+            // Now apply footprints for multi-tile anchors placed in the grid (only if not simulating or door/egg/block is not open/hatched)
             for (let y = 0; y < gridHeight; y++) {
                 for (let x = 0; x < gridWidth; x++) {
                     const cellData = grid[y][x];
-                    if (cellData && cellData.type) {
+                    if (cellData && cellData.type && cellData.type !== 'custom_block') {
                         const tileInfo = TILE_TYPES[cellData.type];
                         if (tileInfo && (tileInfo.width > 1 || tileInfo.height > 1)) {
-                            // Check if opened/hatched in simulation
                             if (isSimulating) {
                                 if (cellData.type === 'door_master' && simDoorsState.some(d => x >= d.x && x < d.x + d.width && y >= d.y && y < d.y + d.height && d.open)) {
                                     continue;
@@ -656,26 +898,102 @@
             }
         }
 
+        // Clear a cell and check if it intersects with any multi-tile blocks
+        function clearCellAndMultiTiles(cx, cy, isAnchorErase = false, isPlacingCustomBlock = false) {
+            if (cx < 0 || cx >= gridWidth || cy < 0 || cy >= gridHeight) return;
+
+            const currentCell = grid[cy][cx];
+            if (currentCell) {
+                if (currentCell.type === 'npc1' || currentCell.type === 'npc2' || currentCell.type === 'boss') {
+                    delete npcDialogues[`${cx}_${cy}`];
+                }
+                if (currentCell.type === 'teleport_head' || currentCell.type === 'teleport_tail') {
+                    const index = teleports.findIndex(tp => 
+                        (tp.head.x === cx && tp.head.y === cy) || (tp.tail.x === cx && tp.tail.y === cy)
+                    );
+                    if (index !== -1) {
+                        const pair = teleports[index];
+                        grid[pair.head.y][pair.head.x] = { type: 'floor_gray' };
+                        grid[pair.tail.y][pair.tail.x] = { type: 'floor_gray' };
+                        teleports.splice(index, 1);
+                    }
+                }
+            }
+
+            // Check if coordinates overlap with doors
+            const doorIdx = doorsList.findIndex(d => cx >= d.x && cx < d.x + d.width && cy >= d.y && cy < d.y + d.height);
+            if (doorIdx !== -1) {
+                const d = doorsList[doorIdx];
+                grid[d.y][d.x] = { type: 'floor_gray' };
+                doorsList.splice(doorIdx, 1);
+            }
+
+            // Check if coordinates overlap with eggs
+            const eggIdx = eggsList.findIndex(e => cx >= e.x && cx < e.x + e.width && cy >= e.y && cy < e.y + e.height);
+            if (eggIdx !== -1) {
+                const e = eggsList[eggIdx];
+                grid[e.y][e.x] = { type: 'floor_gray' };
+                eggsList.splice(eggIdx, 1);
+            }
+
+            // Check if coordinates overlap with custom blocks
+            const blockIdx = customBlocks.findIndex(b => cx >= b.x && cx < b.x + b.width && cy >= b.y && cy < b.y + b.height);
+            if (blockIdx !== -1) {
+                const b = customBlocks[blockIdx];
+                // Only delete custom block background if placing a new background block or erasing its anchor cell
+                if (isPlacingCustomBlock || (isAnchorErase && cx === b.x && cy === b.y)) {
+                    grid[b.y][b.x] = { type: 'floor_gray' };
+                    customBlocks.splice(blockIdx, 1);
+                }
+            }
+
+            grid[cy][cx] = { type: 'floor_gray' };
+        }
+
         // Apply footprint styling to the grid DOM
         function applyFootprintClasses(type, anchorX, anchorY) {
-            const tileInfo = TILE_TYPES[type];
+            let width = 1;
+            let height = 1;
             let footprintClass = '';
-            if (type === 'door_master') footprintClass = 'footprint-master-door';
-            if (type === 'egg') footprintClass = 'footprint-egg';
+            
+            if (type === 'custom_block') {
+                width = 6;
+                height = 6;
+                footprintClass = 'footprint-custom-block';
+            } else {
+                const tileInfo = TILE_TYPES[type];
+                if (tileInfo) {
+                    width = tileInfo.width;
+                    height = tileInfo.height;
+                    if (type === 'door_master') footprintClass = 'footprint-master-door';
+                    if (type === 'egg') footprintClass = 'footprint-egg';
+                }
+            }
 
-            for (let dy = 0; dy < tileInfo.height; dy++) {
-                for (let dx = 0; dx < tileInfo.width; dx++) {
+            for (let dy = 0; dy < height; dy++) {
+                for (let dx = 0; dx < width; dx++) {
                     const targetX = anchorX + dx;
                     const targetY = anchorY + dy;
                     if (targetX < gridWidth && targetY < gridHeight) {
                         const cellElement = document.querySelector(`.grid-cell[data-x="${targetX}"][data-y="${targetY}"]`);
                         if (cellElement) {
+                            // If this is a custom block footprint, do NOT overwrite target cell if it has an overlay tile on it!
+                            if (type === 'custom_block') {
+                                const targetCellData = grid[targetY][targetX];
+                                if (targetCellData && targetCellData.type !== 'floor_gray') {
+                                    continue; // leave it completely alone!
+                                }
+                            }
+
                             if (dx === 0 && dy === 0) {
                                 cellElement.classList.add('cell-anchor');
                             } else {
                                 cellElement.classList.add(footprintClass);
-                                cellElement.textContent = ''; // clear text, footprint inherits visual anchor
-                                cellElement.style.backgroundColor = ''; // clear style, let CSS style handle footprint
+                                cellElement.innerHTML = ''; // clear emoji span
+                                cellElement.style.backgroundColor = ''; // clear color
+                            }
+                            if (type === 'door_master' || type === 'egg') {
+                                cellElement.style.zIndex = '20';
                             }
                         }
                     }
@@ -683,17 +1001,44 @@
             }
         }
 
+        // Check if a multi-tile block can fit at coordinates
+        function canPlaceBlock(type, x, y) {
+            let w = 1, h = 1;
+            if (typeof type === 'object' && type.type === 'custom_block') {
+                w = 6;
+                h = 6;
+            } else {
+                const tileInfo = TILE_TYPES[type];
+                if (tileInfo) {
+                    w = tileInfo.width;
+                    h = tileInfo.height;
+                }
+            }
+            if (x + w > gridWidth || y + h > gridHeight) {
+                return false;
+            }
+            return true;
+        }
+
         // Show footprint preview on hover
         function showPlacementPreview(x, y) {
             clearPlacementPreview();
             
-            const brushInfo = TILE_TYPES[currentBrush];
-            if (!brushInfo) return;
+            let w = 1, h = 1;
+            if (typeof currentBrush === 'object' && currentBrush.type === 'custom_block') {
+                w = 6;
+                h = 6;
+            } else {
+                const brushInfo = TILE_TYPES[currentBrush];
+                if (!brushInfo) return;
+                w = brushInfo.width;
+                h = brushInfo.height;
+            }
 
             const isValid = canPlaceBlock(currentBrush, x, y);
 
-            for (let dy = 0; dy < brushInfo.height; dy++) {
-                for (let dx = 0; dx < brushInfo.width; dx++) {
+            for (let dy = 0; dy < h; dy++) {
+                for (let dx = 0; dx < w; dx++) {
                     const targetX = x + dx;
                     const targetY = y + dy;
                     if (targetX < gridWidth && targetY < gridHeight) {
@@ -730,51 +1075,19 @@
             }
 
             if (activeBrush === 'eraser') {
-                const cellData = grid[y][x];
-                if (cellData) {
-                    if (cellData.type === 'npc1' || cellData.type === 'npc2' || cellData.type === 'boss') {
-                        delete npcDialogues[`${x}_${y}`];
-                    }
-                    if (cellData.type === 'teleport_head' || cellData.type === 'teleport_tail') {
-                        // Find pair and delete both
-                        const index = teleports.findIndex(tp => 
-                            (tp.head.x === x && tp.head.y === y) || (tp.tail.x === x && tp.tail.y === y)
-                        );
-                        if (index !== -1) {
-                            const pair = teleports[index];
-                            grid[pair.head.y][pair.head.x] = { type: 'floor_gray' };
-                            grid[pair.tail.y][pair.tail.x] = { type: 'floor_gray' };
-                            teleports.splice(index, 1);
-                        }
-                    }
-                }
-                grid[y][x] = { type: 'floor_gray' };
+                clearCellAndMultiTiles(x, y, true, false);
                 renderGrid();
                 return;
-            }
-
-            // Before painting over any cell, check if we are overwriting an existing teleporter
-            const existingCell = grid[y][x];
-            if (existingCell && (existingCell.type === 'teleport_head' || existingCell.type === 'teleport_tail')) {
-                const index = teleports.findIndex(tp => 
-                    (tp.head.x === x && tp.head.y === y) || (tp.tail.x === x && tp.tail.y === y)
-                );
-                if (index !== -1) {
-                    const pair = teleports[index];
-                    grid[pair.head.y][pair.head.x] = { type: 'floor_gray' };
-                    grid[pair.tail.y][pair.tail.x] = { type: 'floor_gray' };
-                    teleports.splice(index, 1);
-                }
             }
 
             // Painting teleporter
             if (activeBrush === 'teleport') {
                 if (placingTeleportHead === null) {
                     // Click 1: Place head
+                    clearCellAndMultiTiles(x, y, false, false);
                     placingTeleportHead = { x, y };
                     grid[y][x] = { type: 'teleport_head' };
                     renderGrid();
-                    // Alert or status updates
                     coordsDisplay.textContent = "Placed Portal Head! Now click another tile to place the Tail portal.";
                 } else {
                     // Click 2: Place tail
@@ -782,6 +1095,7 @@
                         alert("Tail portal cannot be placed on the exact same tile as Head!");
                         return;
                     }
+                    clearCellAndMultiTiles(x, y, false, false);
                     grid[y][x] = { type: 'teleport_tail' };
                     teleports.push({
                         head: { x: placingTeleportHead.x, y: placingTeleportHead.y },
@@ -794,48 +1108,53 @@
                 return;
             }
 
-            // Normal brush painting
+            // Normal brush or custom block painting
             if (!canPlaceBlock(activeBrush, x, y)) {
                 alert("Cannot place block here: exceeds grid boundaries!");
                 return;
             }
 
-            // Clean footprints of other blocks we might be overriding
-            const brushInfo = TILE_TYPES[activeBrush];
-            for (let dy = 0; dy < brushInfo.height; dy++) {
-                for (let dx = 0; dx < brushInfo.width; dx++) {
+            // Determine dimensions
+            let brushW = 1, brushH = 1;
+            if (typeof activeBrush === 'object' && activeBrush.type === 'custom_block') {
+                brushW = 6;
+                brushH = 6;
+            } else {
+                const brushInfo = TILE_TYPES[activeBrush];
+                if (brushInfo) {
+                    brushW = brushInfo.width;
+                    brushH = brushInfo.height;
+                }
+            }
+
+            // Clear footprints in the target area
+            const isPlacingCustomBlock = (typeof activeBrush === 'object' && activeBrush.type === 'custom_block');
+            const isAnchorErase = (activeBrush === 'eraser');
+
+            for (let dy = 0; dy < brushH; dy++) {
+                for (let dx = 0; dx < brushW; dx++) {
                     const targetX = x + dx;
                     const targetY = y + dy;
-                    if (targetX < gridWidth && targetY < gridHeight) {
-                        const currentCell = grid[targetY][targetX];
-                        if (currentCell) {
-                            if (currentCell.type === 'npc1' || currentCell.type === 'npc2' || currentCell.type === 'boss') {
-                                delete npcDialogues[`${targetX}_${targetY}`];
-                            }
-                            if (currentCell.type === 'teleport_head' || currentCell.type === 'teleport_tail') {
-                                const index = teleports.findIndex(tp => 
-                                    (tp.head.x === targetX && tp.head.y === targetY) || (tp.tail.x === targetX && tp.tail.y === targetY)
-                                );
-                                if (index !== -1) {
-                                    const pair = teleports[index];
-                                    grid[pair.head.y][pair.head.x] = { type: 'floor_gray' };
-                                    grid[pair.tail.y][pair.tail.x] = { type: 'floor_gray' };
-                                    teleports.splice(index, 1);
-                                }
-                            }
-                        }
-                        grid[targetY][targetX] = { type: 'floor_gray' };
-                    }
+                    clearCellAndMultiTiles(targetX, targetY, isAnchorErase, isPlacingCustomBlock);
                 }
             }
 
             // Place the anchor tile
-            grid[y][x] = { type: activeBrush };
+            if (typeof activeBrush === 'object' && activeBrush.type === 'custom_block') {
+                grid[y][x] = { type: 'custom_block', blockId: activeBrush.id, image: activeBrush.image };
+                customBlocks.push({ id: activeBrush.id, x: x, y: y, width: 6, height: 6, image: activeBrush.image });
+            } else {
+                grid[y][x] = { type: activeBrush };
 
-            // NPC dialogue registration
-            if (activeBrush === 'npc1' || activeBrush === 'npc2' || activeBrush === 'boss') {
-                const text = dialogText.value.trim() || `Hello, adventurer! I am the ${activeBrush === 'boss' ? 'Boss' : (activeBrush === 'npc1' ? 'Student A' : 'Student B')}. Prepare to battle!`;
-                npcDialogues[`${x}_${y}`] = text;
+                // Register other collections
+                if (activeBrush === 'door_master') {
+                    doorsList.push({ x, y, width: 2, height: 1, open: false });
+                } else if (activeBrush === 'egg') {
+                    eggsList.push({ x, y, width: 2, height: 2 });
+                } else if (activeBrush === 'npc1' || activeBrush === 'npc2' || activeBrush === 'boss') {
+                    const text = dialogText.value.trim() || `Hello, adventurer! I am the ${activeBrush === 'boss' ? 'Boss' : (activeBrush === 'npc1' ? 'Student A' : 'Student B')}. Prepare to battle!`;
+                    npcDialogues[`${x}_${y}`] = text;
+                }
             }
 
             renderGrid();
@@ -844,17 +1163,57 @@
         // Resize grid controls
         widthInput.addEventListener('change', () => {
             let newW = parseInt(widthInput.value);
-            if (newW >= 8 && newW <= 64) {
+            if (newW >= 8 && newW <= 150) {
                 resizeGrid(newW, gridHeight);
             }
         });
 
         heightInput.addEventListener('change', () => {
             let newH = parseInt(heightInput.value);
-            if (newH >= 8 && newH <= 64) {
+            if (newH >= 8 && newH <= 150) {
                 resizeGrid(gridWidth, newH);
             }
         });
+
+        // Zoom event listeners
+        btnZoomIn.addEventListener('click', () => {
+            if (zoomLevel < 2.0) {
+                zoomLevel = parseFloat((zoomLevel + 0.15).toFixed(2));
+                zoomLevelDisplay.textContent = `Zoom: ${Math.round(zoomLevel * 100)}%`;
+                renderGrid();
+                if (isSimulating) centerSimCamera();
+            }
+        });
+
+        btnZoomOut.addEventListener('click', () => {
+            if (zoomLevel > 0.25) {
+                zoomLevel = parseFloat((zoomLevel - 0.15).toFixed(2));
+                zoomLevelDisplay.textContent = `Zoom: ${Math.round(zoomLevel * 100)}%`;
+                renderGrid();
+                if (isSimulating) centerSimCamera();
+            }
+        });
+
+        btnZoomReset.addEventListener('click', () => {
+            zoomLevel = 1.0;
+            zoomLevelDisplay.textContent = `Zoom: 100%`;
+            renderGrid();
+            if (isSimulating) centerSimCamera();
+        });
+
+        function centerSimCamera() {
+            if (!isSimulating) return;
+            const playerCell = document.querySelector(`.grid-cell[data-x="${simPlayerPos.x}"][data-y="${simPlayerPos.y}"]`);
+            if (playerCell) {
+                const workspace = document.querySelector('.workspace');
+                if (workspace) {
+                    const targetScrollLeft = playerCell.offsetLeft - (workspace.clientWidth / 2) + (playerCell.clientWidth / 2);
+                    const targetScrollTop = playerCell.offsetTop - (workspace.clientHeight / 2) + (playerCell.clientHeight / 2);
+                    workspace.scrollLeft = targetScrollLeft;
+                    workspace.scrollTop = targetScrollTop;
+                }
+            }
+        }
 
         function resizeGrid(newW, newH) {
             // Create a new grid structure, keeping old cells where possible
@@ -942,7 +1301,8 @@
                 npcs: npcsList,
                 doors: doorsList,
                 eggs: eggsList,
-                teleports: teleportsList
+                teleports: teleportsList,
+                custom_blocks: customBlocks
             };
 
             jsonData.value = JSON.stringify(mapData, null, 4);
@@ -970,16 +1330,28 @@
 
                 npcDialogues = {};
                 grid = [];
+                doorsList = [];
+                eggsList = [];
+                customBlocks = mapData.custom_blocks || [];
 
                 // Recreate grid
                 for (let y = 0; y < gridHeight; y++) {
                     const row = [];
                     for (let x = 0; x < gridWidth; x++) {
                         const tileType = mapData.grid[y][x] || 'floor_gray';
-                        row.push({ type: tileType });
+                        if (tileType === 'custom_block') {
+                            const block = customBlocks.find(b => b.x === x && b.y === y);
+                            row.push({ type: 'custom_block', blockId: block ? block.id : '', image: block ? block.image : '' });
+                        } else {
+                            row.push({ type: tileType });
+                        }
                     }
                     grid.push(row);
                 }
+
+                // Rebuild doorsList and eggsList
+                if (mapData.doors) doorsList = JSON.parse(JSON.stringify(mapData.doors));
+                if (mapData.eggs) eggsList = JSON.parse(JSON.stringify(mapData.eggs));
 
                 // Restore NPC dialogues
                 if (mapData.npcs) {
@@ -1090,6 +1462,7 @@
             btnTest.style.color = "white";
 
             renderGrid();
+            centerSimCamera();
             alert("Playtest started! Use Arrow Keys or WASD to walk. Stand next to NPCs/doors/eggs and press SPACE to interact!");
         }
 
@@ -1130,6 +1503,12 @@
 
         // Helper: Check if cell coords are blocked in sim mode
         function getSimMultiTileInfo(x, y) {
+            // Check custom blocks
+            for (let b of customBlocks) {
+                if (x >= b.x && x < b.x + b.width && y >= b.y && y < b.y + b.height) {
+                    return { type: 'custom_block', data: b };
+                }
+            }
             // Check doors
             for (let d of simDoorsState) {
                 if (x >= d.x && x < d.x + d.width && y >= d.y && y < d.y + d.height) {
@@ -1171,7 +1550,7 @@
             }
 
             const cellType = grid[nextY][nextX].type;
-            if (cellType === 'wall') return;
+            if (cellType === 'wall' || cellType === 'invisible_wall') return;
 
             const info = getSimMultiTileInfo(nextX, nextY);
             if (info) {
@@ -1184,6 +1563,7 @@
             simPlayerPos.x = nextX;
             simPlayerPos.y = nextY;
             renderGrid();
+            centerSimCamera();
 
             // Check teleport portals
             const stepOn = getSimMultiTileInfo(nextX, nextY);
@@ -1199,6 +1579,7 @@
                         simJustTeleported = true;
                         simDialogueOverlay.style.display = 'none';
                         renderGrid();
+                        centerSimCamera();
                     }, 400);
                 }
             } else {
@@ -1306,12 +1687,17 @@
             }
 
             if (dx !== 0 || dy !== 0) {
-                moveSimPlayer(dx, dy);
+                const now = Date.now();
+                if (now - lastSimMoveTime >= 150) {
+                    lastSimMoveTime = now;
+                    moveSimPlayer(dx, dy);
+                }
             }
         });
 
         // Setup Init
         initPalette();
+        initBlocksCollection();
         initGrid(12, 12);
     </script>
 </body>
