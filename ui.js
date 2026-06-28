@@ -175,15 +175,6 @@ function getMultiTileInfo(x, y) {
         }
     }
     
-    // Check custom blocks
-    if (state.exploreMap.custom_blocks) {
-        for (let b of state.exploreMap.custom_blocks) {
-            if (x >= b.x && x < b.x + b.width && y >= b.y && y < b.y + b.height) {
-                return { type: 'custom_block', data: b };
-            }
-        }
-    }
-    
     // Check teleports
     if (state.exploreMap.teleports) {
         for (let tp of state.exploreMap.teleports) {
@@ -201,6 +192,15 @@ function getMultiTileInfo(x, y) {
         for (let npc of state.exploreMap.npcs) {
             if (npc.x === x && npc.y === y) {
                 return { type: 'npc', data: npc };
+            }
+        }
+    }
+
+    // Check custom blocks
+    if (state.exploreMap.custom_blocks) {
+        for (let b of state.exploreMap.custom_blocks) {
+            if (x >= b.x && x < b.x + b.width && y >= b.y && y < b.y + b.height) {
+                return { type: 'custom_block', data: b };
             }
         }
     }
